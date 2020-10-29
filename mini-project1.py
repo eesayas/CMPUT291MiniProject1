@@ -59,6 +59,9 @@ Functionalities sysfunc(). Else, print a login error message and show
 interface again.
 -----------------------------------------------------------------'''
 def loginScreen():
+    print("""==================================================
+    LOGIN SCREEN
+==================================================""")
     while True:
         # get the username via user input
         uid = input("Enter username: ")
@@ -91,6 +94,9 @@ Data will also have crdate, which is the current date. When register is
 successful move on to system functionalities sysfunc().
 -------------------------------------------------------------------------'''
 def registerScreen():
+    print("""==================================================
+    REGISTER SCREEN
+==================================================""")
     while True:
         # get the uid
         uid = input("Enter uid: ")
@@ -131,6 +137,9 @@ Purpose: This is the interface where users can either post a question
 or search for a post to do further post actions
 -----------------------------------------------------------------'''
 def sysFunc():
+    print("""==================================================
+    SYSTEM FUNCTIONALITIES
+==================================================""")
     while True:
         print("""System functions:
         1 - Post a question
