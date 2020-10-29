@@ -42,10 +42,7 @@ def ask_for_keywords():
 
 	return keyword_list
 
-def user_action(user_action, post_dict):
-	pass
-
-def keyword_search(keyword_list): # maybe put IN instead? find example
+def keyword_search(keyword_list): 
 	for keyword in keyword_list: # Add the rest of the columns later***
 		c.execute("""SELECT p_count.pid, p_count.title, p_count.body, p_count.pdate, p_count.poster, COUNT(p_count.pid) AS pcount, 
 
