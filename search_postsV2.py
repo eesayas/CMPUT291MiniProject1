@@ -129,6 +129,7 @@ def keyword_search(keyword_list):
 				temp_dict[tup[0]] += tup[1]
 
 	order_track = list(tuple(temp_dict.items())) # Order track will become a list of tuples again
+	order_track.sort(key =lambda order_list: order_list[1], reverse = True) # In descending order again
 	
 	# ----------------------------------------------------------------------
 
