@@ -101,7 +101,7 @@ def keyword_search(keyword_list):
 		# Sorts the list based on the keyword count, or the second element of each tuple (in descending order)
 		# eg. Taken from the example above, [(pid: 001, pcount: 2), (pid: 002, pcount: 3)]
 		# -------------------------------------------------
-
+	print(order_track)
 	select_options = {} 
 	# Will be used to keep track of the post that the user has selected.
 	# eg. {'1': p005, '2': p006}
@@ -113,6 +113,25 @@ def keyword_search(keyword_list):
 	max = 0 
 	selected = False # The user has not selected a post yet
 	reached_max = False # Did not display all the posts yet
+
+	# ----------------------------------------------------------------------
+	# The following will group the keyword count for posts with the same keyword together 
+	# (eg. post1 has 2 keyword1, post1 has 3 keyword2, therefore post1 will have a total keyword count of 5)
+
+	temp_dict = {} # Temporary dictionary
+
+	for tup in order_track:
+		temp_dict[tup[0]] = 0 # Each post id wil act as a key and  will start off with a keyword count of 0 intiially
+
+	for key in temp_dict.keys(): 
+		for tup in order_track:
+			if tup[0] == key: # Check if each post id occurs more than once, and if it does, add the keyword counts together
+				temp_dict[tup[0]] += tup[1]
+
+	order_track = list(tuple(temp_dict.items())) # Order track will become a list of tuples again
+	
+	# ----------------------------------------------------------------------
+
 	while not selected:
 		max += 5 # Determines how many posts will be displayed
 		for num in range(max):
@@ -153,7 +172,7 @@ def keyword_search(keyword_list):
 					select_options[str(num+1)] = each['pid'] # Add the post option into the list of possible options for user
 
 		if not reached_max: # If more posts can be displayed			
-			user_select = input("Select a post displayed above, or type in 's' to see more posts. \n")
+			user_select = input("\nSelect a post displayed above, or type in 's' to see more posts. \n")
 		else:
 			user_select = input("\nSelect a post displayed above:  \n")
 
@@ -161,9 +180,11 @@ def keyword_search(keyword_list):
 		if user_select in select_options.keys(): # If the user selects a post result number that is displayed above
 			return select_options[user_select]
 
+
+
 	conn.commit()
 
 	conn.close()
 
 
-keyword_search(['%life%','%eggs%']) # Example keywords used to test
+keyword_search(['%what%','%do%']) # Example keywords used to test
