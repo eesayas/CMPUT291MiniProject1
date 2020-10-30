@@ -1,4 +1,4 @@
-# Post action-Add a tag. The user should be able to add tags to the post.
+# Post Action-Edit. The user should be able to edit the title and/or the body of the post. Other fields are not updated when a post is edited.
 # TO DO:
 # Consider possible test cases
 # Providing a description about the function 
