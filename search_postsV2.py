@@ -12,7 +12,7 @@
 import sqlite3, sys
 from datetime import datetime
 
-conn = sqlite3.connect('new.db') # Pass the database as a command line argument
+conn = sqlite3.connect(sys.argv[1]) # Pass the database as a command line argument
 conn.row_factory = sqlite3.Row 
 c = conn.cursor()
 c.execute('PRAGMA foreign_keys = ON;')
