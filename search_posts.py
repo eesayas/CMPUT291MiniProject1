@@ -74,15 +74,15 @@ def keyword_search():
 
 		c.execute("""SELECT p_count.pid, COUNT(p_count.pid) AS pcount
 				 
-					FROM (SELECT posts.pid , posts.title, posts.body, posts.pdate, posts.poster from posts where title LIKE ?
+					FROM (SELECT posts.pid from posts where title LIKE ?
 
 					UNION ALL
 
-					SELECT posts.pid, posts.title, posts.body, posts.pdate, posts.poster from posts where body LIKE ?
+					SELECT posts.pid from posts where body LIKE ?
 
 					UNION ALL
 	
-					SELECT tags.pid, posts.title, posts.body, posts.pdate, posts.poster from tags, posts 
+					SELECT tags.pid from tags, posts 
 
 					where tags.pid = posts.pid AND tag LIKE ?) p_count
 					
