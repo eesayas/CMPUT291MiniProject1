@@ -33,7 +33,7 @@ def ask_for_keywords():
 		continue_search = input('\nWould you like to enter another keyword? (y/n)?: ').lower()
 
 		if continue_search == 'n': # If the user no longer wants to enter any more keywords
-			search_keyword = True # The user is done searching
+			search_keyword = False # The user is done searching
 
 	return keyword_list
 
@@ -45,7 +45,9 @@ Output: returns the postID that the user has selected
 
 -----------------------------------------------------"""
 
-def keyword_search(keyword_list): 
+def keyword_search(): 
+	
+	keyword_list = ask_for_keywords()
 
 	order_track = [] # A list that will be used later to keep track of the posts and the order that they should be displayed in
 
@@ -188,4 +190,4 @@ def keyword_search(keyword_list):
 	conn.close()
 
 
-keyword_search(['%what%','%do%']) # Example keywords used to test
+keyword_search() 
