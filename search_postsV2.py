@@ -31,6 +31,9 @@ def ask_for_keywords():
 		user_input = '%' + input('\nEnter one or more keywords to narrow down your search: ') + '%'
 		keyword_list.append(user_input) # Adds the keyword to the list
 		continue_search = input('\nWould you like to enter another keyword? (y/n)?: ').lower()
+		
+		while continue_search not in ('y','n'): # If the user does not enter yes or no
+			continue_search = input('\nPlease enter a valid input (y/n): ').lower()
 
 		if continue_search == 'n': # If the user no longer wants to enter any more keywords
 			search_keyword = False # The user is done searching
