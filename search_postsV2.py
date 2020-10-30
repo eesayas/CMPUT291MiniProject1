@@ -125,10 +125,10 @@ def keyword_search(keyword_list):
 		display = c.fetchall()
 		for each in display:
 			print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 'Title: ' + each['title'] + '\n' + 
-			'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' 
-				
+			'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
 			'Number of votes: '+ str(each['vcount']) + '\n' + 
-			'Number of answers: ' + str('N/A' if each['acount'] == None else each['acount'])) 
+			'Number of answers: ' + str('N/A' if each['acount'] == None else each['acount']) + '\n' + 'Body: ' + 
+			each['body'][:30] + '...') 
 			# If the post is an answer, then the number of answers is N/A.
 			select_options[str(num+1)] = each['pid']
 		
