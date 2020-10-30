@@ -28,7 +28,7 @@ def ask_for_keywords():
 	search_keyword = True # The user is still searching keywords
 
 	while search_keyword: 
-		user_input = '%' + input('Enter one or more keywords to narrow down your search: ') + '%'
+		user_input = '%' + input('\nEnter one or more keywords to narrow down your search: ') + '%'
 		keyword_list.append(user_input) # Adds the keyword to the list
 		continue_search = input('\nWould you like to enter another keyword? (y/n)?: ').lower()
 
