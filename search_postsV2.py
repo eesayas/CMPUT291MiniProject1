@@ -48,7 +48,10 @@ Output: returns the postID that the user has selected
 def keyword_search(keyword_list): 
 
 	order_track = [] # A list that will be used later to keep track of the posts and the order that they should be displayed in
-	
+
+	# Keeps track of all the posts to prevent them from being displayed again (eg. if two keywords are in the same post)
+	post_list = [] 
+
 	for keyword in keyword_list: 
 		# For each keyword that the user has chosen, the pid, title, body, pdate, poster, keyword count, vote count, and
 		# answer count (zero if no answers) will be executed
@@ -105,11 +108,23 @@ def keyword_search(keyword_list):
 	# If the user enters '1' as their input later on, then 'p005' will be returned
 
 
-	# For each post from the ordered list (order_track), its information will be displayed.
-	# Creating an similar execute statement again to see if it would work better
-	for num in range(len(order_track)):
-		current = order_track[num][0]
-		c.execute("""SELECT p.pid, p.title, p.body, p.pdate, p.poster, 
+	# Will store how many posts will be displayed at one time (eg. the first time, 5 posts will be displayed, and 10 posts will
+	# be displayed for the second time).
+	max = 0 
+	selected = False # The user has not selected a post yet
+	reached_max = False # Did not display all the posts yet
+	while not selected:
+		max += 5 # Determines how many posts will be displayed
+		for num in range(max):
+			try:
+				current = order_track[num][0] # Order track in the form of eg. [('p001', 5), ('p008', 2)]
+			except IndexError: 
+				reached_max = True
+				 # Posts will be displayed in multiples of 5. Ignore error if it is not a multiple of 5 (eg. 13 posts)
+				
+			# For each post from the ordered list (order_track), its information will be displayed.
+			# Creating an similar execute statement again to see if it would work better
+			c.execute("""SELECT p.pid, p.title, p.body, p.pdate, p.poster, 
 
 					IFNULL(v_count.vcount,0) AS vcount, a_count.acount AS acount
 				 
@@ -121,21 +136,34 @@ def keyword_search(keyword_list):
 					
 					FROM answers a GROUP BY a.qid) a_count ON p.pid = a_count.qid WHERE p.pid = ?""", (current,))
 
-		print('----------------')
-		display = c.fetchall()
-		for each in display:
-			print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 'Title: ' + each['title'] + '\n' + 
-			'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
-			'Number of votes: '+ str(each['vcount']) + '\n' + 
-			'Number of answers: ' + str('N/A' if each['acount'] == None else each['acount']) + '\n' + 'Body: ' + 
-			each['body'][:30] + '...') 
-			# If the post is an answer, then the number of answers is N/A.
-			select_options[str(num+1)] = each['pid']
-		
+	   
+			display = c.fetchall()
+
+			for each in display:
+				if each['pid'] not in post_list: # If the post has not been displayed yet (in case of multiples of the same post)
+					print('----------------')
+					post_list.append(each['pid']) # Keeps track of posts that have already been posted
+			
+					print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 'Title: ' + each['title'] + '\n' + 
+						'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
+						'Number of votes: '+ str(each['vcount']) + '\n' + 
+						'Number of answers: ' + str('N/A' if each['acount'] == None else each['acount']) + '\n' + 'Body: ' + 
+						each['body'][:30] + '...') # If the post is an answer, then the number of answers is N/A.
+
+					select_options[str(num+1)] = each['pid'] # Add the post option into the list of possible options for user
+
+		if not reached_max: # If more posts can be displayed			
+			user_select = input("Select a post displayed above, or type in 's' to see more posts. \n")
+		else:
+			user_select = input("\nSelect a post displayed above:  \n")
+
+
+		if user_select in select_options.keys(): # If the user selects a post result number that is displayed above
+			return select_options[user_select]
 
 	conn.commit()
 
 	conn.close()
 
 
-keyword_search(['%life%','%eggs%'])
+keyword_search(['%life%','%eggs%']) # Example keywords used to test
