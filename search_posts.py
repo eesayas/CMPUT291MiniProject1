@@ -76,11 +76,11 @@ def keyword_search():
 				 
 					FROM (SELECT posts.pid from posts where title LIKE ?
 
-					UNION ALL
+					UNION 
 
 					SELECT posts.pid from posts where body LIKE ?
 
-					UNION ALL
+					UNION 
 	
 					SELECT tags.pid from tags, posts 
 
