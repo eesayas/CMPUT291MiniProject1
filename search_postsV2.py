@@ -101,7 +101,7 @@ def keyword_search(keyword_list):
 		# Sorts the list based on the keyword count, or the second element of each tuple (in descending order)
 		# eg. Taken from the example above, [(pid: 001, pcount: 2), (pid: 002, pcount: 3)]
 		# -------------------------------------------------
-	print(order_track)
+	
 	select_options = {} 
 	# Will be used to keep track of the post that the user has selected.
 	# eg. {'1': p005, '2': p006}
