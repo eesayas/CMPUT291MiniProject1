@@ -17,7 +17,11 @@ def ask_for_keywords():
 	search_keyword = True # The user is still searching keywords
 
 	while search_keyword: 
-		user_input = '%' + input('\nEnter one or more keywords to narrow down your search: ') + '%'
+		user_keyword = input('\nEnter one or more keywords to narrow down your search: ')
+		while len(user_keyword.strip()) == 0: # Assuming that the user has entered an empty string
+			user_keyword = input('\nEnter one or more keywords to narrow down your search: ')
+
+		user_input = '%' + user_keyword.strip() + '%'
 		keyword_list.append(user_input) # Adds the keyword to the list
 
 		continue_search = input('\nWould you like to enter another keyword? (y/n)?: ').lower()
@@ -121,6 +125,7 @@ def keyword_search():
 	# ----------------------------------------------------------------------
 	order_track = group_keyword_count(order_track)
 	# ---------------------------------------------------------------------
+	
 	while not selected:
 		max += 5 # Determines how many posts will be displayed
 		for num in range(max):
@@ -192,5 +197,4 @@ def keyword_search():
 
 
 keyword_search() 
-
 
