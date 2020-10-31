@@ -1,4 +1,3 @@
-
 import sqlite3, sys
 from datetime import datetime
 
@@ -134,7 +133,7 @@ def keyword_search():
 			# For each post from the ordered list (order_track), its information will be displayed.
 			c.execute("""SELECT p.pid, p.title, p.body, p.pdate, p.poster, 
 
-					IFNULL(v_count.vcount,0) AS vcount, a_count.acount AS acount
+					IFNULL(v_count.vcount,0) AS vcount, IFNULL(a_count.acount,0) AS acount, q.qpid
 				 
 					FROM posts p
 					
@@ -142,7 +141,11 @@ def keyword_search():
 				
 					ON p.pid = v_count.pid LEFT OUTER JOIN (SELECT a.qid, COUNT(a.pid) AS acount 
 					
-					FROM answers a GROUP BY a.qid) a_count ON p.pid = a_count.qid WHERE p.pid = ?""", (current,))
+					FROM answers a GROUP BY a.qid) a_count ON p.pid = a_count.qid LEFT OUTER JOIN (SELECT q.pid AS qpid FROM 
+					
+					questions q) q ON p.pid = q.qpid
+
+					WHERE p.pid = ?""", (current,))
 
 	   
 			display = c.fetchall()
@@ -152,11 +155,14 @@ def keyword_search():
 					print('---------------------------------------------------')
 					post_list.append(each['pid']) # Keeps track of posts that have already been posted
 			
-					print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 'Title: ' + each['title'] + '\n' + 
+					print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 
+						'Type of post: ' + str('Question' if each['qpid'] != None else 'Answer') + '\n'
+						'Title: ' + each['title'] + '\n' + 
 						'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
 						'Number of votes: '+ str(each['vcount']) + '\n' + 
-						'Number of answers: ' + str('N/A' if each['acount'] == None else each['acount']) + '\n' + 'Body: ' + 
-						each['body'][:30] + '...') # If the post is an answer, then the number of answers is N/A.
+						'Number of answers: ' + str('N/A' if each['acount'] == 0 and each['qpid'] == None
+						else each['acount']) + '\n' + 'Body: ' +  each['body'][:30] + '...') 
+						# If the post is an answer, then the number of answers is N/A.
 
 					select_options[str(num+1)] = each['pid'] # Adds the post option into the list of possible options for user
 			# ----------------------------------------------------------------------------------------------------------------
