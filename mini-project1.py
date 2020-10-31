@@ -1,6 +1,7 @@
 import sqlite3
 from getpass import getpass
 from datetime import date
+import random
 
 def main():
     # establish connection with database
@@ -149,7 +150,7 @@ def sysFunc():
 
         # selecting system functions to run
         if str(func) == "1":
-            #call postQuestion()
+            postQuestion()
             break
         elif str(func) == "2":
             #call searchPost()
@@ -162,6 +163,36 @@ def sysFunc():
             break
         else:
             print("\nYou've enter an invalid function\n")
+
+'''-----------------------------------------------------------------
+postQuestion() - The Post Question Screen
+
+Purpose: This is the interface where users can post a question
+-----------------------------------------------------------------'''
+def postQuestion():
+    print("""==================================================
+    POST A QUESTION
+==================================================""")
+
+    # get data
+    title = input("Enter Title of Question: ")
+    body = input("Enter Body of Question: ")
+
+    # generate a pid
+    pid = random.randint(1000, 9999)
+    
+    # pdate is date today
+    pdate = date.today()
+
+    # try to insert to db
+    c.execute("""
+        insert into posts
+        values (:pid, :pdate, :title, :body, :poster)
+        """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user[0]})
+
+    print("\nQuestion posted successfully!\n")
+
+    sysFunc()
 
 '''-----------------------------------------------------------------
 retrieveUser() - Helper function: Retrieve user data from db
