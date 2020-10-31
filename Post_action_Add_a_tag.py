@@ -1,6 +1,4 @@
-# Post action-Vote. The user should be able to vote on the post (if not voted already on the same post). The vote should be recorded in the 
-# database with a vno assigned by your system, the vote date set to the current date and the user id is set to the current user.
-
+# Post action-Add a tag. The user should be able to add tags to the post.
 # TO DO:
 # Consider possible test cases
 # Providing a description about the function 
@@ -11,40 +9,44 @@ from datetime import date
 
 conn = None
 c = None
-def vote(user_id,post_id):
-    current = date.today()
-    print(current)
+def tag(user_id,post_id,tag):
+    #this makes sure the user is privileged exists
+    c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
+    rows = c.fetchall()
+    if len(rows) < 1:
+        print("You are not a priviledged user and thus cannot add tags to posts. Tag rejected")
+        conn.commit()
+        #conn.close()
+        return
+
+
     #this makes sure the post exists
     c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
     rows = c.fetchall()
     if len(rows) < 1:
-        print("This post does not exist. Vote rejected")
+        print("This post does not exist. Tag rejected")
         conn.commit()
         #conn.close()
         return
-    #this makes sure the user has not already voted on this specific post
-    c.execute("SELECT pid FROM votes WHERE pid =:ourPid AND uid=:ourUser",{"ourPid":post_id, "ourUser":user_id} )
+
+    #this is for making sure another tag does not exist where the pid is the same and tag is the same (here case ie lowercase or uppercase should
+    #not factor in .lower() is used to assure this)
+    c.execute("SELECT pid, tag FROM tags")
     rows = c.fetchall()
-    if len(rows) > 0:
-        print("You have already voted on this post. Vote rejected")
-        conn.commit()
-        #conn.close()
-        return
-    c.execute("SELECT DISTINCT vno FROM votes")
-    rows = c.fetchall()
-    max = 0
     num = len(rows)
     print(num)
+    #knowledge of lower function from https://www.programiz.com/python-programming/methods/string/lower
     for i in range(0, num):
-        if rows[i][0] > max:
-            max = rows[i][0]
-    print(max)
-    newVn = max +1
-    conn.commit()
-
-    c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user_id})
+        if rows[i][0].lower() == post_id.lower():
+            if rows[i][1].lower() == tag.lower():
+                print("This post already has this tag. Tag rejected")
+                conn.commit()
+                return
+    c.execute("INSERT INTO tags(pid,tag) VALUES (:ourPid, :ourTag);", {'ourPid': post_id, 'ourTag': tag})
+    print("Tag added")
     
     conn.commit()
+    return
 
 
 def drop_tables():
@@ -58,6 +60,7 @@ def drop_tables():
     drop_ubadges = "DROP TABLE IF EXISTS ubadges";
     drop_badges = "DROP TABLE IF EXISTS badges";
     drop_users = "DROP TABLE IF EXISTS users";
+    drop_privileged = "DROP TABLE IF EXISTS privileged";
 
     c.execute(drop_answers)
     c.execute(drop_questions)
@@ -66,7 +69,10 @@ def drop_tables():
     c.execute(drop_posts)
     c.execute(drop_ubadges)
     c.execute(drop_badges)
+    c.execute(drop_privileged)
     c.execute(drop_users)
+    
+
 
 def define_tables():
     global conn, c
@@ -152,6 +158,14 @@ def define_tables():
     );
     '''
 
+    privileged_query = '''
+    create table privileged (
+    uid		char(4),
+    primary key (uid),
+    foreign key (uid) references users
+    );
+    '''
+
     c.execute(users_query)
     c.execute(badges_query)
     c.execute(ubadges_query)
@@ -160,6 +174,7 @@ def define_tables():
     c.execute(votes_query)
     c.execute(questions_query)
     c.execute(answers_query)
+    c.execute(privileged_query)
 
     return
 
@@ -199,11 +214,13 @@ def connect(path):
 def main():
     global connection, cursor
     connect(sys.argv[1])
-    #drop_tables()
-    #define_tables()
-    #c.execute('''insert into users(uid,name,pwd,city,crdate) VALUES ('u001','Vince Wain', 123, 'Edmonton', 2019-01-05);''')
-    #c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p001',2019-01-06, 'What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
-    vote('u001','p001')
+    drop_tables()
+    define_tables()
+    c.execute('''insert into users(uid,name,pwd,city,crdate) VALUES ('u001','Vince Wain', 123, 'Edmonton', 2019-01-05);''')
+    c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p001',2019-01-06, 'What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
+    c.execute('''insert into tags(pid,tag) VALUES ('p001','richardisbesT');''')
+    c.execute('''insert into privileged(uid) VALUES ('u001');''')
+    tag('u001','p001','RichardIsBest')
     conn.commit()
     conn.close()
 

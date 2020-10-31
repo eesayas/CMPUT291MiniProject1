@@ -1,6 +1,4 @@
-# Post action-Vote. The user should be able to vote on the post (if not voted already on the same post). The vote should be recorded in the 
-# database with a vno assigned by your system, the vote date set to the current date and the user id is set to the current user.
-
+# Post Action-Edit. The user should be able to edit the title and/or the body of the post. Other fields are not updated when a post is edited.
 # TO DO:
 # Consider possible test cases
 # Providing a description about the function 
@@ -11,40 +9,46 @@ from datetime import date
 
 conn = None
 c = None
-def vote(user_id,post_id):
-    current = date.today()
-    print(current)
+def edit(user_id,post_id,editTitle,editBody,title,body):
+#empty title or body is used to represent a lack of edit for either title or body respectively
+
+    #this makes sure the user is privileged exists
+    c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
+    rows = c.fetchall()
+    if len(rows) < 1:
+        print("You are not a priviledged user and thus cannot add tags to posts. Edit rejected")
+        conn.commit()
+        #conn.close()
+        return
+
+
     #this makes sure the post exists
     c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
     rows = c.fetchall()
     if len(rows) < 1:
-        print("This post does not exist. Vote rejected")
+        print("This post does not exist. Edit rejected")
         conn.commit()
         #conn.close()
         return
-    #this makes sure the user has not already voted on this specific post
-    c.execute("SELECT pid FROM votes WHERE pid =:ourPid AND uid=:ourUser",{"ourPid":post_id, "ourUser":user_id} )
-    rows = c.fetchall()
-    if len(rows) > 0:
-        print("You have already voted on this post. Vote rejected")
-        conn.commit()
-        #conn.close()
-        return
-    c.execute("SELECT DISTINCT vno FROM votes")
-    rows = c.fetchall()
-    max = 0
-    num = len(rows)
-    print(num)
-    for i in range(0, num):
-        if rows[i][0] > max:
-            max = rows[i][0]
-    print(max)
-    newVn = max +1
-    conn.commit()
+    if editTitle == True:
+        if editBody == True:
+            #update format found on https://www.w3schools.com/sql/sql_update.asp
+            c.execute("UPDATE posts SET title = :ourTitle, body = :ourBody WHERE pid = :ourPid;",{"ourTitle":title,"ourBody":body, "ourPid":post_id})
+            print("Body and Title updated. Edit accepted")
+        
+        else:
+            c.execute("UPDATE posts SET title = :ourTitle WHERE pid = :ourPid;",{"ourTitle":title, "ourPid":post_id})
+            print("Title updated. Edit accepted")
+    else:
+        if editBody == True:
+            c.execute("UPDATE posts SET body = :ourBody WHERE pid = :ourPid;",{"ourBody":body, "ourPid":post_id})
+            print("Body updated. Edit accepted")
 
-    c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user_id})
+    #c.execute("INSERT INTO tags(pid,tag) VALUES (:ourPid, :ourTag);", {'ourPid': post_id, 'ourTag': tag})
+    
     
     conn.commit()
+    return
 
 
 def drop_tables():
@@ -58,6 +62,7 @@ def drop_tables():
     drop_ubadges = "DROP TABLE IF EXISTS ubadges";
     drop_badges = "DROP TABLE IF EXISTS badges";
     drop_users = "DROP TABLE IF EXISTS users";
+    drop_privileged = "DROP TABLE IF EXISTS privileged";
 
     c.execute(drop_answers)
     c.execute(drop_questions)
@@ -66,7 +71,10 @@ def drop_tables():
     c.execute(drop_posts)
     c.execute(drop_ubadges)
     c.execute(drop_badges)
+    c.execute(drop_privileged)
     c.execute(drop_users)
+    
+
 
 def define_tables():
     global conn, c
@@ -152,6 +160,14 @@ def define_tables():
     );
     '''
 
+    privileged_query = '''
+    create table privileged (
+    uid		char(4),
+    primary key (uid),
+    foreign key (uid) references users
+    );
+    '''
+
     c.execute(users_query)
     c.execute(badges_query)
     c.execute(ubadges_query)
@@ -160,6 +176,7 @@ def define_tables():
     c.execute(votes_query)
     c.execute(questions_query)
     c.execute(answers_query)
+    c.execute(privileged_query)
 
     return
 
@@ -199,11 +216,27 @@ def connect(path):
 def main():
     global connection, cursor
     connect(sys.argv[1])
-    #drop_tables()
-    #define_tables()
-    #c.execute('''insert into users(uid,name,pwd,city,crdate) VALUES ('u001','Vince Wain', 123, 'Edmonton', 2019-01-05);''')
-    #c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p001',2019-01-06, 'What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
-    vote('u001','p001')
+    drop_tables()
+    define_tables()
+    c.execute('''insert into users(uid,name,pwd,city,crdate) VALUES ('u001','Vince Wain', 123, 'Edmonton', 2019-01-05);''')
+    c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p001',2019-01-06, 'What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
+    c.execute('''insert into tags(pid,tag) VALUES ('p001','richardisbesT');''')
+    c.execute('''insert into privileged(uid) VALUES ('u001');''')
+    #for informtaion on taking input in python https://www.geeksforgeeks.org/taking-input-in-python/
+    post = input("What post would you like to edit? ") 
+    updateTitle = input("Would you like to edit the Title? (y for yes, n for no) ")
+    if updateTitle.lower() == "y":
+        updateTitle = True
+        newTitle = input("What would you like the new Title to be? ")
+    elif updateTitle.lower() == "n":
+        updateTitle = False
+    updateBody = input("Would you like to edit the Body? (y for yes, n for no) ")
+    if updateBody.lower() == "y":
+        updateBody = True
+        newBody = input("What would you like the new Body to be? ")
+    elif updateBody.lower() == "n":
+        updateBody = False
+    edit('u001',post,updateTitle,updateBody,'','new body')
     conn.commit()
     conn.close()
 

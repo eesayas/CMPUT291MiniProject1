@@ -1,22 +1,6 @@
-'''Search for posts.The user should be able to provide one or more keywords, 
-    and the system should retrieve all posts that contain at least one keyword either in title, body, or tag fields.
-        
-    For each matching post, in addition to the columns of posts table, the number of votes, and the number of 
-    answers if the post is a question (or zero if the question has no answers) should be displayed. 
-
-    The result should be ordered based on the number of matching keywords with posts matching the 
-    largest number of keywords listed on top. If there are more than 5 matching posts, 
-    at most 5 matches will be shown at a time, letting the user select a post or see more matches. 
-    The user should be able to select a post and perform a post action (as discussed next).'''
-
-    
-# TO DO:
-# Figure out how to get the function to work for more than one keyword
-# Consider possible test cases
-# Providing a description about the function 
-# Display the result differently for questions and answers (do not leave as NULL) (as mentioned in forum)
-
-
+# NOTE: search_posts will return the postID when the user selects a post or will return None if no posts could be found
+# (this could be because the keywords returned nothing or the user entered invalid keyword(s), resulting in no posts returning)
+# In mini project, perhaps add While search_posts == None, run the function again?
 
 import sqlite3, sys
 from datetime import datetime
@@ -26,89 +10,203 @@ conn.row_factory = sqlite3.Row
 c = conn.cursor()
 c.execute('PRAGMA foreign_keys = ON;')
 
+""" -------------------------------
+Purpose: Asks the user to enter one or more keywords.
 
-
+Input: None
+Output: returns the list of keywords
+-------------------------------------"""
 def ask_for_keywords():
-	keyword_list = []
-	search_keyword = True
+	keyword_list = [] # List of keywords that the user has entered
+	search_keyword = True # The user is still searching keywords
 
 	while search_keyword: 
-		user_input = '%' + input('\nEnter one or more keywords to narrow down your search: ') + '%'
-		keyword_list.append(user_input)
-		continue_search = input('\n Would you like to enter another keyword? (y/n)?: ')
+		user_keyword = input('\nEnter one or more keywords to narrow down your search: ')
+		while len(user_keyword.strip()) == 0: # Assuming that the user has entered an empty string
+			user_keyword = input('\nEnter one or more keywords to narrow down your search: ')
+
+		user_input = '%' + user_keyword.strip() + '%'
+		if user_input.lower() in keyword_list: # If the user enters the same keyword (since LIKE is case-insensitive)
+			print('\nYou have already entered that keyword.')
+		else:
+			keyword_list.append(user_input) # Adds the keyword to the list
+
+		continue_search = input('\nWould you like to enter another keyword? (y/n)?: ').lower()
+
+		while continue_search not in ('y','n'): # If the user does not enter yes or no
+			continue_search = input('\nPlease enter a valid input (y/n): ').lower()
 
 		if continue_search == 'n': # If the user no longer wants to enter any more keywords
-			search_keyword = False
+			search_keyword = False # The user is done searching
 
-	return keyword_list
+	return keyword_list 
 
-def keyword_search(keyword_list): 
-	for keyword in keyword_list: # Add the rest of the columns later***
-		c.execute("""SELECT p_count.pid, p_count.title, p_count.body, p_count.pdate, p_count.poster, COUNT(p_count.pid) AS pcount, 
+""" -------------------------------
+Purpose: Groups the keyword count for posts with the same postID, but different keyword(s) together
+eg. post1 contains keyword1 and keyword2, giving it a total of 2.
 
-					IFNULL(v_count.vcount,0) AS vcount, a_count.acount AS acount
+Input: None
+Output: returns the list of keywords
+-------------------------------------"""
+def group_keyword_count(order_track):
+
+	temp_dict = {} # Temporary dictionary
+
+	for tup in order_track: # Iterates over the tuples 
+		temp_dict[tup[0]] = 0 # Each postID wil act as a key and will start off with a keyword count of 0 intiially
+
+	for key in temp_dict.keys(): 
+		for tup in order_track:
+			if tup[0] == key: # Checks if each postID occurs more than once, and if it does, adds the keyword counts together
+				temp_dict[tup[0]] += tup[1]
+
+	order_track = list(tuple(temp_dict.items())) # Order track will become a list of tuples again
+	order_track.sort(key =lambda order_list: order_list[1], reverse = True) # Will be sorted based on keyword count
+	return order_track 
+
+""" -------------------------------------------------
+Purpose: The posts that contains the keywords will be displayed.
+
+Input: None
+Output: returns the postID that the user has selected
+-----------------------------------------------------"""
+def keyword_search(): 
+
+	keyword_list = ask_for_keywords()
+
+	order_track = [] # A list that will be used later to keep track of the posts and the order that they should be displayed in
+
+	# Keeps track of all the posts to prevent them from being displayed again (eg. if two keywords are in the same post)
+	post_list = [] 
+
+	for keyword in keyword_list: 
+
+		c.execute("""SELECT p_count.pid, COUNT(p_count.pid) AS pcount
 				 
-					FROM (SELECT posts.pid , posts.title, posts.body, posts.pdate, posts.poster from posts where title LIKE ?
+					FROM (SELECT posts.pid from posts where title LIKE ?
 
-					UNION ALL
+					UNION 
 
-					SELECT posts.pid, posts.title, posts.body, posts.pdate, posts.poster from posts where body LIKE ?
+					SELECT posts.pid from posts where body LIKE ?
 
-					UNION ALL
+					UNION 
 	
-					SELECT tags.pid, posts.title, posts.body, posts.pdate, posts.poster from tags, posts 
+					SELECT tags.pid from tags, posts 
 
 					where tags.pid = posts.pid AND tag LIKE ?) p_count
-					
-					LEFT OUTER JOIN (SELECT v.pid, COUNT(v.vno) as vcount FROM votes v GROUP BY v.pid) v_count
-				
-					ON p_count.pid = v_count.pid LEFT OUTER JOIN 
-					
-					(SELECT a.qid, COUNT(a.pid) AS acount 
-					
-					FROM answers a GROUP BY a.qid) a_count ON p_count.pid = a_count.qid
-					
 					
 					GROUP BY p_count.pid
 					
 					ORDER BY pcount DESC
 
-					;""", (keyword, keyword, keyword,)) # Still working on changing its order***
+					;""", (keyword, keyword, keyword,)) 
 
-		# Displaying the results
-	not_selected_post = True # User has not selected a post yets
-	display_pcount = 5
-	p_num_count = 1
-	post_dict = {}
+		# ----------------------------------------------
+		# The following is used to determine the order that the posts will be displayed in (based the number of keywords
+		# that show up in each result)
+		row = c.fetchall()
+		for each in row:
+			order_track.append((each['pid'],each['pcount']))  
+			# Used to keep track of the postID and the keyword count (known as pcount)
+			# eg. [(pid: 001, pcount: 2), (pid: 002, pcount: 3)]
 
-	while not_selected_post:
-		row = c.fetchmany(display_pcount)
-		for p_num, each in enumerate(row, start = p_num_count):
-			print('\n', p_num,each['pid'], each['title'], each['body'][:50] + '...', each['pdate'], each['poster'], each['pcount'], 
-			each['vcount'], each['acount'], '\n')
-			post_dict[str(p_num)] = each['pid']
-		p_num_count += 5
-		print(post_dict)
+		order_track.sort(key =lambda order_list: order_list[1], reverse = True)
+		# Sorts the list based on the keyword count, or the second element of each tuple (in descending order)
+		# eg. Taken from the example above, [(pid: 001, pcount: 3), (pid: 002, pcount: 2)]
+		# -------------------------------------------------
 
-		if len(row) == display_pcount:
-			user_action = input("Select one of the following posts, or type in 's' to see more.")
-			if user_action in post_dict.keys():
-				user_action = post_dict[user_action]
-				print(user_action)
-				return user_action
+	select_options = {} 
+	# Will be used to keep track of the post that the user has selected.
+	# eg. {'1': p005, '2': p006}
+	# If the user enters '1' as their input later on, then 'p005' will be returned
+
+	# The max variable will  store how many posts will be displayed at one time 
+	# (eg. 5 posts will be displayed for the first time, and 10 posts will
+	# be displayed for the second time).
+	max = 0 
+
+	selected = False # The user has not selected a post yet
+	reached_max = False # The max number of posts has not been displayed
+
+	# ----------------------------------------------------------------------
+	order_track = group_keyword_count(order_track)
+	# ---------------------------------------------------------------------
+
+	while not selected:
+		max += 5 # Determines how many posts will be displayed
+		for num in range(max):
+			try:
+				current = order_track[num][0] # Order track in the form of eg. [('p001', 5), ('p008', 2)]
+
+				# For each post from the ordered list (order_track), its information will be displayed.
+				c.execute("""SELECT p.pid, p.title, p.body, p.pdate, p.poster, 
+
+					IFNULL(v_count.vcount,0) AS vcount, IFNULL(a_count.acount,0) AS acount, q.qpid
+				 
+					FROM posts p
+					
+					LEFT OUTER JOIN (SELECT v.pid, COUNT(v.vno) as vcount FROM votes v GROUP BY v.pid) v_count
+				
+					ON p.pid = v_count.pid LEFT OUTER JOIN (SELECT a.qid, COUNT(a.pid) AS acount 
+					
+					FROM answers a GROUP BY a.qid) a_count ON p.pid = a_count.qid LEFT OUTER JOIN (SELECT q.pid AS qpid FROM 
+					
+					questions q) q ON p.pid = q.qpid
+
+					WHERE p.pid = ?""", (current,))
+
+
+			except IndexError: 
+				reached_max = True
+				 # Posts will be displayed in multiples of 5. Ignore error if it is not a multiple of 5 (eg. 13 posts)
+
+			except UnboundLocalError: # Assuming that the user does not enter a valid keyword (eg. '   ')
+				continue
+	   
+			display = c.fetchall()
+	
+			# -------------------------------------------------------------------------------
+			for each in display:
+				if each['pid'] not in post_list: # If the post has not been displayed yet (in case of multiples of the same post)
+					print('---------------------------------------------------')
+					post_list.append(each['pid']) # Keeps track of posts that have already been posted
+			
+					print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 
+						'Type of post: ' + ('Question' if each['qpid'] != None else 'Answer') + '\n'
+						'Title: ' + each['title'] + '\n' + 
+						'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
+						'Number of votes: '+ str(each['vcount']) + '\n' + 
+						'Number of answers: ' + str('N/A' if each['acount'] == 0 and each['qpid'] == None
+						else each['acount']) + '\n' + 'Body: ' +  each['body'][:30] + '...') 
+						# If the post is an answer, then the number of answers is N/A.
+
+					select_options[str(num+1)] = each['pid'] # Adds the post option into the list of possible options for user
+			# ----------------------------------------------------------------------------------------------------------------
+		if len(post_list) == 0: # If no posts are displayed
+			print('\nNo posts are displayed. Please try using other valid keywords.')
+			return 
+
+		if not reached_max: # If more posts can be displayed			
+			user_select = input("\nSelect a post displayed above, or type in 's' to see more posts. \n")
 		else:
-			user_action = input("Select one of the following posts.")
-			if user_action in post_dict.keys():
-				user_action = post_dict[user_action]
-				print(user_action)
-				return user_action
+			user_select = input("\nSelect a post displayed above:  \n")
 
-keyword_list = ask_for_keywords()
-keyword_search(keyword_list)
+		# ---------------------------------------------------------------------------------------------------------
+		if user_select in select_options.keys(): # If the user selects a post result number that is displayed above
+			return select_options[user_select]
+		elif user_select == 's':
+			continue
+		else:
+			valid_input = False # The user did not enter a valid input
+			while not valid_input:
+				user_select = input('Please enter a valid input: ')
+				if user_select in select_options.keys(): # If the user selects a post result number that is displayed above
+					return select_options[user_select]
+				elif user_select == 's': 
+					break
+		# ----------------------------------------------------------------------------------------------------------
+	conn.commit()
+	conn.close()
 
-conn.commit()
-
-conn.close()
-
-
+keyword_search() 
 
