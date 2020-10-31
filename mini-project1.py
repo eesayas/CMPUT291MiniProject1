@@ -397,6 +397,44 @@ def keyword_search():
 					break
 		# ----------------------------------------------------------------------------------------------------------
 
+
+
+def vote(user_id,post_id):
+    current = date.today()
+    print(current)
+    #this makes sure the post exists
+    c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
+    rows = c.fetchall()
+    if len(rows) < 1:
+        print("This post does not exist. Vote rejected")
+        conn.commit()
+        #conn.close()
+        return
+    #this makes sure the user has not already voted on this specific post
+    c.execute("SELECT pid FROM votes WHERE pid =:ourPid AND uid=:ourUser",{"ourPid":post_id, "ourUser":user_id} )
+    rows = c.fetchall()
+    if len(rows) > 0:
+        print("You have already voted on this post. Vote rejected")
+        conn.commit()
+        #conn.close()
+        return
+    c.execute("SELECT DISTINCT vno FROM votes")
+    rows = c.fetchall()
+    max = 0
+    num = len(rows)
+    print(num)
+    for i in range(0, num):
+        if rows[i][0] > max:
+            max = rows[i][0]
+    print(max)
+    newVn = max +1
+    conn.commit()
+
+    c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user_id})
+    
+    conn.commit()
+
+
 '''-----------------------------------------------------------------
 retrieveUser() - Helper function: Retrieve user data from db
 
