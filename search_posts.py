@@ -1,3 +1,7 @@
+# NOTE: search_posts will return the postID when the user selects a post or will return None if no posts could be found
+# (this could be because the keywords returned nothing or the user entered invalid keyword(s), resulting in no posts returning)
+# In mini project, perhaps add While search_posts == None, run the function again?
+
 import sqlite3, sys
 from datetime import datetime
 
@@ -22,7 +26,10 @@ def ask_for_keywords():
 			user_keyword = input('\nEnter one or more keywords to narrow down your search: ')
 
 		user_input = '%' + user_keyword.strip() + '%'
-		keyword_list.append(user_input) # Adds the keyword to the list
+		if user_input.lower() in keyword_list: # If the user enters the same keyword (since LIKE is case-insensitive)
+			print('\nYou have already entered that keyword.')
+		else:
+			keyword_list.append(user_input) # Adds the keyword to the list
 
 		continue_search = input('\nWould you like to enter another keyword? (y/n)?: ').lower()
 
@@ -56,7 +63,6 @@ def group_keyword_count(order_track):
 	order_track = list(tuple(temp_dict.items())) # Order track will become a list of tuples again
 	order_track.sort(key =lambda order_list: order_list[1], reverse = True) # Will be sorted based on keyword count
 	return order_track 
-
 
 """ -------------------------------------------------
 Purpose: The posts that contains the keywords will be displayed.
@@ -125,18 +131,15 @@ def keyword_search():
 	# ----------------------------------------------------------------------
 	order_track = group_keyword_count(order_track)
 	# ---------------------------------------------------------------------
-	
+
 	while not selected:
 		max += 5 # Determines how many posts will be displayed
 		for num in range(max):
 			try:
 				current = order_track[num][0] # Order track in the form of eg. [('p001', 5), ('p008', 2)]
-			except IndexError: 
-				reached_max = True
-				 # Posts will be displayed in multiples of 5. Ignore error if it is not a multiple of 5 (eg. 13 posts)
-				
-			# For each post from the ordered list (order_track), its information will be displayed.
-			c.execute("""SELECT p.pid, p.title, p.body, p.pdate, p.poster, 
+
+				# For each post from the ordered list (order_track), its information will be displayed.
+				c.execute("""SELECT p.pid, p.title, p.body, p.pdate, p.poster, 
 
 					IFNULL(v_count.vcount,0) AS vcount, IFNULL(a_count.acount,0) AS acount, q.qpid
 				 
@@ -152,8 +155,16 @@ def keyword_search():
 
 					WHERE p.pid = ?""", (current,))
 
+
+			except IndexError: 
+				reached_max = True
+				 # Posts will be displayed in multiples of 5. Ignore error if it is not a multiple of 5 (eg. 13 posts)
+
+			except UnboundLocalError: # Assuming that the user does not enter a valid keyword (eg. '   ')
+				continue
 	   
 			display = c.fetchall()
+	
 			# -------------------------------------------------------------------------------
 			for each in display:
 				if each['pid'] not in post_list: # If the post has not been displayed yet (in case of multiples of the same post)
@@ -171,6 +182,10 @@ def keyword_search():
 
 					select_options[str(num+1)] = each['pid'] # Adds the post option into the list of possible options for user
 			# ----------------------------------------------------------------------------------------------------------------
+		if len(post_list) == 0: # If no posts are displayed
+			print('\nNo posts are displayed. Please try using other valid keywords.')
+			return 
+
 		if not reached_max: # If more posts can be displayed			
 			user_select = input("\nSelect a post displayed above, or type in 's' to see more posts. \n")
 		else:
@@ -190,11 +205,8 @@ def keyword_search():
 				elif user_select == 's': 
 					break
 		# ----------------------------------------------------------------------------------------------------------
-
 	conn.commit()
-
 	conn.close()
-
 
 keyword_search() 
 
