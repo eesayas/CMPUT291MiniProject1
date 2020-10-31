@@ -156,7 +156,7 @@ def keyword_search():
 					post_list.append(each['pid']) # Keeps track of posts that have already been posted
 			
 					print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 
-						'Type of post: ' + str('Question' if each['qpid'] != None else 'Answer') + '\n'
+						'Type of post: ' + ('Question' if each['qpid'] != None else 'Answer') + '\n'
 						'Title: ' + each['title'] + '\n' + 
 						'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
 						'Number of votes: '+ str(each['vcount']) + '\n' + 
