@@ -208,5 +208,3 @@ def keyword_search():
 	conn.commit()
 	conn.close()
 
-keyword_search() 
-

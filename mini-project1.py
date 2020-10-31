@@ -1,15 +1,17 @@
-import sqlite3
+import sqlite3, sys
 from getpass import getpass
 from datetime import date
 import random
+from search_posts.py import keyword_search
 
 def main():
     # establish connection with database
-    conn = sqlite3.connect("data.db")
+    conn = sqlite3.connect(sys.argv[1])
 
     # this global variable can be used on all function call inside main()
     global c
     c = conn.cursor()
+    c.execute('PRAGMA foreign_keys = ON;')
 
     # boot up welcome screen (which will give the login options)
     welcomeScreen()
@@ -154,6 +156,7 @@ def sysFunc():
             break
         elif str(func) == "2":
             #call searchPost()
+            keyword_search()
             break
         elif str(func).lower() == "logout":
             logout()
