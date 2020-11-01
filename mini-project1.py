@@ -421,6 +421,12 @@ Output: None
 --------------------------------------------------------------"""
 
 def mark_accepted(post_id):
+	
+    row = c.execute("SELECT pid FROM questions")
+    for each in row:
+        if each['pid'] == post_id: # If the post that the user has selected is a question
+	    print("\nThe post you have selected is a question. Therefore, this option is not valid.")
+	    return
 
     # Finding the question ID and the current accepted answer (the current postID is the input)
     c.execute("SELECT a.qid, q.theaid FROM answers a, questions q WHERE a.qid = q.pid AND a.pid = ?", (post_id,))
