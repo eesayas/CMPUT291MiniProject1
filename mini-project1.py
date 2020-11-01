@@ -412,8 +412,94 @@ def keyword_search():
 				elif user_select == 's': 
 					break
 		# ----------------------------------------------------------------------------------------------------------
+		
+""" ------------------------------------------------------------
+Purpose: If the post is an answer, a privileged user can mark
+an answer as the accepted answer, or leave it as it is.
+Input: postID that belongs to an answer
+Output: None
+--------------------------------------------------------------"""
+
+def mark_accepted(post_id):
+
+    # Finding the question ID and the current accepted answer (the current postID is the input)
+    c.execute("SELECT a.qid, q.theaid FROM answers a, questions q WHERE a.qid = q.pid AND a.pid = ?", (post_id,))
+    
+    row = c.fetchone() # Only one output is to be expected
+    
+    if row['theaid'] != None: # If an accepted answer exists
+        acc_answer = row['theaid']  # The postID of the accepted answer
+            
+        # Gets input from the user if they would like to change the accepted answer
+        print("An accepted answer already exists.\n")
+        a_exists = input("Would you like to change the accepted answer? \n 1. Yes \n 2. No \n")
+        while a_exists not in ('1','2'):
+            a_exists = input("Please enter a valid input: ")
 
 
+    else: # If an accepted answer does not exist
+        a_exists = input("Would you like to mark this as the accepted answer? \n 1. Yes \n 2. No \n")
+        while a_exists not in ('1','2'):
+            a_exists = input("Please enter a valid input: ")
+
+
+
+    if a_exists == '1': # If the user wants to change the accepted answer
+
+            # --------------------------------------------------------------------------------
+            # If the user is changing the accepted answer to the current accepted answer
+            if row['theaid'] == post_id:
+                    print("This post is already the accepted answer of the question.")
+            # --------------------------------------------------------------------------------
+
+            else: # Changes the current accepted answer to the answer that the user has chosen
+                c.execute("""UPDATE questions SET theaid = ? WHERE pid = 
+                         (SELECT a.qid FROM answers a WHERE a.pid = ?)""", (post_id, post_id))
+
+
+    conn.commit()
+    return
+
+""" -----------------------
+Purpose: Allows the privileged user to give the poster a badge. 
+Input: postID
+Output: None
+---------------------------"""
+def give_badge(post_id):
+
+	current = date.today() # The current date 
+
+	c.execute('SELECT poster FROM posts WHERE pid = ?;', (post_id,))
+	row = c.fetchone() # Only one output is expected
+	poster_id = row['poster'] # Finds the poster of the selected post
+	
+	c.execute('SELECT rowid, bname FROM badges ORDER BY rowid; ') # rowIDs are used to give numbered options to the user
+	row = c.fetchall()
+
+	possible_options = [] # Keeps track of all the possible numbered options the user can choose from
+	for b_info in row:
+		possible_options.append(str(b_info['rowid']))
+		print(b_info['rowid'],b_info['bname']) # Displaying the badge options for the user to choose from
+
+	# User enters a number that corresponds to the badge name
+	b_name_input = input('\nWhich badge would you like to give? Enter the number that is associated with the badge: ')
+	while b_name_input not in possible_options:
+		b_name_input = input('\nPlease enter a valid number that is associated with a badge: ')
+
+
+	for each in row:
+		if str(each['rowid']) == b_name_input:
+			b_name_input = each['bname'] # Finds the badge name based on the number given by the user
+
+	# Stores the poster, the current date, and the badge selected
+	b_add = {'uid': poster_id, 'bdate': current, 'b_name': b_name_input} 
+
+	c.execute('INSERT INTO ubadges VALUES (:uid, :bdate,:b_name)', b_add)
+	print('\nBadge has been given!')
+
+	conn.commit()
+
+	return
 """ -------------------------------------------------
 Purpose: Allows a user to add a vote on the 
 post(for which its post id is passed as input)
@@ -712,11 +798,11 @@ def post_action(pid):
             break
         elif action == '3':
             #user chose to mark this post as accepted
-            print("TBD")
+            mark_accepted(pid)
             break
         elif action == '4':
             #user chose to give a badge to the poster of this post
-            print("TBD")
+            give_badge(pid)
             break
         elif action == '5':
             #user chose to add a tag to the post
