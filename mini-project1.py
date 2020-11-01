@@ -492,7 +492,13 @@ def give_badge(post_id):
 			b_name_input = each['bname'] # Finds the badge name based on the number given by the user
 
 	# Stores the poster, the current date, and the badge selected
-	b_add = {'uid': poster_id, 'bdate': current, 'b_name': b_name_input} 
+	b_add = {'uid': poster_id, 'bdate': current, 'b_name': b_name_input}
+	
+	try:
+	    c.execute('INSERT INTO ubadges VALUES (:uid, :bdate,:b_name)', b_add)
+	except sqlite3.Error as e:
+	    print("\nYou cannot give a badge to the same user on the same day.")
+	    return
 
 	c.execute('INSERT INTO ubadges VALUES (:uid, :bdate,:b_name)', b_add)
 	print('\nBadge has been given!')
