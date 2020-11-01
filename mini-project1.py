@@ -8,6 +8,8 @@ def main():
     # establish connection with database
     conn = sqlite3.connect(sys.argv[1])
 
+    createDataBase()
+
     # this global variable can be used on all function call inside main()
     global c
     c = conn.cursor()
@@ -156,7 +158,14 @@ def sysFunc():
             break
         elif str(func) == "2":
             #call searchPost()
-            keyword_search()
+            end = False
+            while end == False:
+                if (keyword_search() = None):
+                    end = False
+                else:
+                    end = True
+            
+            
             break
         elif str(func).lower() == "logout":
             logout()
@@ -634,5 +643,11 @@ def insert_data():
     c.execute(insert_students)
     conn.commit()
     return
+
+def createDataBase(){
+    drop_tables()
+    define_tables()
+    insert_data()
+}
 
 main()
