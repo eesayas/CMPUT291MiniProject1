@@ -414,8 +414,15 @@ def keyword_search():
 		# ----------------------------------------------------------------------------------------------------------
 
 
+""" -------------------------------------------------
+Purpose: Allows a user to add a vote on the 
+post(for which its post id is passed as input)
 
+Input: post_id: the pid of the post
+Output: None
+-----------------------------------------------------"""
 def vote(post_id):
+    #get the current user's uid
     global user
     user_id = user[0]
     current = date.today()
@@ -424,7 +431,7 @@ def vote(post_id):
     rows = c.fetchall()
     if len(rows) < 1:
         print("This post does not exist. Vote rejected")
-        conn.commit()
+        #conn.commit()
         #conn.close()
         return
     #this makes sure the user has not already voted on this specific post
@@ -432,9 +439,10 @@ def vote(post_id):
     rows = c.fetchall()
     if len(rows) > 0:
         print("You have already voted on this post. Vote rejected")
-        conn.commit()
+        #conn.commit()
         #conn.close()
         return
+    #this is used to get a new distinct vno by getting all previous vno's and making our new vno 1+(max of all previous vno)
     c.execute("SELECT DISTINCT vno FROM votes")
     rows = c.fetchall()
     max = 0
@@ -443,26 +451,32 @@ def vote(post_id):
         if rows[i][0] > max:
             max = rows[i][0]
     newVn = max +1
-    conn.commit()
-
+    #conn.commit()
+    #add our new vote to the database
     c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user_id})
     print("Vote added!")
     conn.commit()
 
+""" -------------------------------------------------
+Purpose: Allows a privileged user to add a tag on the 
+post(for which its post id is passed as input)
+the user is given a choice of what the tag should say
+and gets a chance to enter this via the command line
+
+Input: post_id: the pid of the post
+Output: None
+-----------------------------------------------------"""
 def tag(post_id):
+    #get the current user's uid
     global user
     user_id = user[0]
-    tag = input("What would you like the tag to say? Enter 'exit' to exit or 'logout' to logout: ") 
-    if tag == 'exit':
-        exit()
-    if tag == 'logout':
-        logout()
-    #this makes sure the user is privileged exists
+
+    #this makes sure the user is privileged
     c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
     rows = c.fetchall()
     if len(rows) < 1:
         print("You are not a priviledged user and thus cannot add tags to posts. Tag rejected")
-        conn.commit()
+        #conn.commit()
         #conn.close()
         return
 
@@ -472,84 +486,55 @@ def tag(post_id):
     rows = c.fetchall()
     if len(rows) < 1:
         print("This post does not exist. Tag rejected")
-        conn.commit()
+        #conn.commit()
         #conn.close()
         return
 
+    #get the user's input for the tag's content
+    tag = input("What would you like the tag to say? Enter 'exit' to exit or 'logout' to logout: ") 
+    #test to see if the user is trying to exit or loggout and proceed accordingly
+    if tag.lower() == 'exit':
+        exit()
+    if tag.lower() == 'logout':
+        logout()
+
     #this is for making sure another tag does not exist where the pid is the same and tag is the same (here case ie lowercase or uppercase should
-    #not factor in .lower() is used to assure this)
+    #not factor in .lower() is used to assure this) knowledge of lower function from https://www.programiz.com/python-programming/methods/string/lower
     c.execute("SELECT pid, tag FROM tags")
     rows = c.fetchall()
     num = len(rows)
-    print(num)
-    #knowledge of lower function from https://www.programiz.com/python-programming/methods/string/lower
+
     for i in range(0, num):
         if rows[i][0].lower() == post_id.lower():
             if rows[i][1].lower() == tag.lower():
                 print("This post already has this tag. Tag rejected")
                 conn.commit()
                 return
+
+    #add the tag to the batabase
     c.execute("INSERT INTO tags(pid,tag) VALUES (:ourPid, :ourTag);", {'ourPid': post_id, 'ourTag': tag})
     print("Tag added")
     
     conn.commit()
     return
 
+
+""" -------------------------------------------------
+Purpose: Allows a privileged user to edit a
+post(for which its post id is passed as input)
+the user is given a choice as to wether they want to 
+edit the title and/or the body of the post
+and gets a chance to enter their choices via the command line
+Depending on their choices the user can then enter in
+the new titles and/or body once again via the command line
+
+Input: post_id: the pid of the post
+Output: None
+-----------------------------------------------------"""
 def edit(post_id):
+    #get the current user's uid
     global user
     user_id = user[0]
-    updateTitleChoice = input("Would you like to edit the Title? Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
-    updateTitleChoice = updateTitleChoice.lower()
-    while (True):
-        if updateTitleChoice == "yes":
-            updateTitle = True
-            newTitle = input("What would you like the new Title to be? Enter 'exit' to exit or 'logout' to logout: ")
-            if newTitle == 'exit':
-                exit()
-                return
-            elif newTitle == 'logout':
-                logout()
-                return
-            else:
-                break
-        elif updateTitleChoice == "no":
-            updateTitle = False
-            break
-        elif updateTitleChoice == "exit":
-            exit()
-            return
-        elif updateTitleChoice == "logout":
-            logout()
-            return
-        else:
-            updateTitleChoice = input("Invalid choice please choose a valid action from either 'yes','no,'exit' or 'logout': ")
-
-    updateBodyChoice = input("Would you like to edit the Body? Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
-    updateBodyChoice = updateBodyChoice.lower()
-    while (True):
-        if updateBodyChoice == "yes":
-            updateBody = True
-            newBody = input("What would you like the new Body to be? Enter 'exit' to exit or 'logout' to logout: ")
-            if newBody.lower() == 'exit':
-                exit()
-                return
-            elif newBody.lower() == 'logout':
-                logout()
-                return
-            else:
-                break
-        elif updateBodyChoice == "no":
-            updateBody = False
-            break
-        elif updateBodyChoice == "exit":
-            exit()
-            return
-        elif updateBodyChoice == "logout":
-            logout()
-            return
-        else:
-            updateBodyChoice = input("Incorrect choice please choose a valid action from either 'yes','no,'exit' or 'logout': ")
-            
 
     #this makes sure the user is privileged exists
     c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
@@ -569,21 +554,101 @@ def edit(post_id):
         conn.commit()
         #conn.close()
         return
+
+    #get the user's choice for wether or not they would like the edit the post's title
+    updateTitleChoice = input("Would you like to edit the Title? Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
+    updateTitleChoice = updateTitleChoice.lower()
+    
+    #this continues to loop untill a valid choice is made
+    while (True):
+        if updateTitleChoice == "yes":
+            #user wants to edit the title
+            updateTitle = True
+            #if the user chooses exit or logout proceed accordingly else this is the new title
+            newTitle = input("What would you like the new Title to be? Enter 'exit' to exit or 'logout' to logout: ")
+            if newTitle.lower() == 'exit':
+                exit()
+                return
+            elif newTitle.lower() == 'logout':
+                logout()
+                return
+            else:
+                break
+        elif updateTitleChoice == "no":
+            #user does not want to edit the title
+            updateTitle = False
+            break
+        elif updateTitleChoice == "exit":
+            #user wants to exit
+            exit()
+            return
+        elif updateTitleChoice == "logout":
+            #user wants to logout
+            logout()
+            return
+        else:
+            #user's choice was not a valid one. Ask them for a new choice
+            updateTitleChoice = input("Invalid choice please choose a valid action from either 'yes','no,'exit' or 'logout': ")
+            updateTitleChoice = updateTitleChoice.lower()
+
+    #get the user's choice for wether or not they would like the edit the post's body
+    updateBodyChoice = input("Would you like to edit the Body? Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
+    updateBodyChoice = updateBodyChoice.lower()
+
+    #this continues to loop untill a valid choice is made
+    while (True):
+        if updateBodyChoice == "yes":
+            #user wants to edit the Body
+            updateBody = True
+            #if the user chooses exit or logout proceed accordingly else this is the new body
+            newBody = input("What would you like the new Body to be? Enter 'exit' to exit or 'logout' to logout: ")
+            if newBody.lower() == 'exit':
+                exit()
+                return
+            elif newBody.lower() == 'logout':
+                logout()
+                return
+            else:
+                break
+        elif updateBodyChoice == "no":
+            #user does not want to edit the body
+            updateBody = False
+            break
+        elif updateBodyChoice == "exit":
+            #user wants to exit
+            exit()
+            return
+        elif updateBodyChoice == "logout":
+            #user wants to logout
+            logout()
+            return
+        else:
+            #user's choice was not a valid one. Ask them for a new choice
+            updateBodyChoice = input("Incorrect choice please choose a valid action from either 'yes','no,'exit' or 'logout': ")
+            updateBodyChoice = updateBodyChoice.lower()
+            
+
+
     if updateTitle == True:
         if updateBody == True:
+            #the user chose yes to update title and update body, update these fields in the database accoding to the new values supplied
             #update format found on https://www.w3schools.com/sql/sql_update.asp
             c.execute("UPDATE posts SET title = :ourTitle, body = :ourBody WHERE pid = :ourPid;",{"ourTitle":newTitle,"ourBody":newBody, "ourPid":post_id})
             print("Body and Title updated. Edit accepted")
         
         else:
+            #the user chose yes to update title and no to update body, update this field in the database accoding to the new value supplied
             c.execute("UPDATE posts SET title = :ourTitle WHERE pid = :ourPid;",{"ourTitle":newTitle, "ourPid":post_id})
             print("Title updated. Edit accepted")
     else:
         if updateBody == True:
+            #the user chose no to update title and yes to update body, update this field in the database accoding to the new value supplied
             c.execute("UPDATE posts SET body = :ourBody WHERE pid = :ourPid;",{"ourBody":newBody, "ourPid":post_id})
             print("Body updated. Edit accepted")
-
-    #c.execute("INSERT INTO tags(pid,tag) VALUES (:ourPid, :ourTag);", {'ourPid': post_id, 'ourTag': tag})
+        else:
+            #the user chose no to update title and no to update body, no update to the database but user is told they were able to perform an edit
+            # ie they are a privileged user and the post exists
+            print("No updates performed. Edit accepted")
     
     
     conn.commit()
@@ -611,8 +676,19 @@ def retrieveUser(uid, pwd):
 
     return c.fetchone()
 
+
+""" -------------------------------------------------
+Purpose: Displays the Screen which contains all the post
+actions availible to the user. Then prompts the user to
+enter their choice of action and takes the corrent action
+accordinglt
+
+Input: post_id: the pid of the current selected post
+Output: None
+-----------------------------------------------------"""
 def post_action(pid):
-    correct_action = False
+    #dispay all the post actions availible to the user (including of course exit and logout)
+    print("""==================================================\n    POST ACTIONS\n==================================================""")
     print("What action would you like to perform on this post?")
     print("Enter 1 to post an answer for this post")
     print("Enter 2 to vote on this post")
@@ -621,51 +697,71 @@ def post_action(pid):
     print("Enter 5 to add a tag to the post")
     print("Enter 6 to edit the title and/or body of the post")
     print("Or enter 'exit' to exit or 'logout' to logout")
+    #gets the users choice of post action
     action = input("What action would you like to take? ") 
     action = action.lower()
+    #loops untill a valid choice is made
     while (True):
+        #user chose to post ananswer to this post
         if action.lower() == '1':
             print("TBD")
             break
         elif action.lower() == '2':
+            #user chose to place a vote on this post
             vote(pid)
             break
         elif action == '3':
+            #user chose to mark this post as accepted
             print("TBD")
             break
         elif action == '4':
+            #user chose to give a badge to the poster of this post
             print("TBD")
             break
         elif action == '5':
+            #user chose to add a tag to the post
             tag(pid)
             break
         elif action == '6':
+            #user chose to edit the title and/or body of the post
             edit(pid)
             break
         elif action == 'exit':
+            #user wishes to exit
             exit()
             return
         elif action == 'logout':
+            #user wishes to logout
             logout()
             return
         else:
+            #users did not make a valid choice, get a new choice
             action = input("Invalid action please choose a valid action from either '1','2','3','4','5','6','exit' or 'logout': ")
+            action = action.lower()
+    #after the post action is completed ask the user if they would like to perform another post action on this post
     print("What would you like to perform another action on this post? ")
     response = input("Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
     response = response.lower()
+    #loop untill the user choses a valid option
     while (True):
         if response == 'no':
+            #user does not wish to perform another post-action, go back to system functionalities page
             sysFunc()
         elif response == 'yes':
+            #user does wish to perform another post-action, make a recursive call to restart this function
             post_action(pid)
         elif response == 'exit':
+            #user wishes to exit
             exit()
             return
         elif response == 'logout':
+            #user wishes to logout
             logout()
             return
         else:
+            #user did not supply a valid choice. Prompt the user for another choice
             response = input("Invalid input please enter 'yes, 'no', 'exit' or logout': ")
+            response = response.lower()
 
 
     return
