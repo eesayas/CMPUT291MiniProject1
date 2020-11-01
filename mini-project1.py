@@ -25,11 +25,13 @@ def main():
     welcomeScreen()
 
     # this will print when exit() is called, exit() will return here
-    print("\nGoodbye!\n")
+
+#moved this to exit. When I changed up exit
+#    print("\nGoodbye!\n")
 
     # standard
-    conn.commit()
-    conn.close()
+#    conn.commit()
+#    conn.close()
 
 '''-----------------------------------------------------------------
 welcomeScreen() - The Welcome Screen
@@ -493,6 +495,99 @@ def tag(post_id):
     conn.commit()
     return
 
+def edit(post_id):
+    global user
+    user_id = user[0]
+    updateTitleChoice = input("Would you like to edit the Title? Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
+    updateTitleChoice = updateTitleChoice.lower()
+    while (True):
+        if updateTitleChoice == "yes":
+            updateTitle = True
+            newTitle = input("What would you like the new Title to be? Enter 'exit' to exit or 'logout' to logout: ")
+            if newTitle == 'exit':
+                exit()
+                return
+            elif newTitle == 'logout':
+                logout()
+                return
+            else:
+                break
+        elif updateTitleChoice == "no":
+            updateTitle = False
+            break
+        elif updateTitleChoice == "exit":
+            exit()
+            return
+        elif updateTitleChoice == "logout":
+            logout()
+            return
+        else:
+            updateTitleChoice = input("Invalid choice please choose a valid action from either 'yes','no,'exit' or 'logout': ")
+
+    updateBodyChoice = input("Would you like to edit the Body? Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
+    updateBodyChoice = updateBodyChoice.lower()
+    while (True):
+        if updateBodyChoice == "yes":
+            updateBody = True
+            newBody = input("What would you like the new Body to be? Enter 'exit' to exit or 'logout' to logout: ")
+            if newBody.lower() == 'exit':
+                exit()
+                return
+            elif newBody.lower() == 'logout':
+                logout()
+                return
+            else:
+                break
+        elif updateBodyChoice == "no":
+            updateBody = False
+            break
+        elif updateBodyChoice == "exit":
+            exit()
+            return
+        elif updateBodyChoice == "logout":
+            logout()
+            return
+        else:
+            updateBodyChoice = input("Incorrect choice please choose a valid action from either 'yes','no,'exit' or 'logout': ")
+            
+
+    #this makes sure the user is privileged exists
+    c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
+    rows = c.fetchall()
+    if len(rows) < 1:
+        print("You are not a priviledged user and thus cannot add tags to posts. Edit rejected")
+        conn.commit()
+        #conn.close()
+        return
+
+
+    #this makes sure the post exists
+    c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
+    rows = c.fetchall()
+    if len(rows) < 1:
+        print("This post does not exist. Edit rejected")
+        conn.commit()
+        #conn.close()
+        return
+    if updateTitle == True:
+        if updateBody == True:
+            #update format found on https://www.w3schools.com/sql/sql_update.asp
+            c.execute("UPDATE posts SET title = :ourTitle, body = :ourBody WHERE pid = :ourPid;",{"ourTitle":newTitle,"ourBody":newBody, "ourPid":post_id})
+            print("Body and Title updated. Edit accepted")
+        
+        else:
+            c.execute("UPDATE posts SET title = :ourTitle WHERE pid = :ourPid;",{"ourTitle":newTitle, "ourPid":post_id})
+            print("Title updated. Edit accepted")
+    else:
+        if updateBody == True:
+            c.execute("UPDATE posts SET body = :ourBody WHERE pid = :ourPid;",{"ourBody":newBody, "ourPid":post_id})
+            print("Body updated. Edit accepted")
+
+    #c.execute("INSERT INTO tags(pid,tag) VALUES (:ourPid, :ourTag);", {'ourPid': post_id, 'ourTag': tag})
+    
+    
+    conn.commit()
+    return
 
 '''-----------------------------------------------------------------
 retrieveUser() - Helper function: Retrieve user data from db
@@ -545,7 +640,7 @@ def post_action(pid):
             tag(pid)
             break
         elif action == '6':
-            print("TBD")
+            edit(pid)
             break
         elif action == 'exit':
             exit()
@@ -554,7 +649,7 @@ def post_action(pid):
             logout()
             return
         else:
-            action = input("Incorrect action please choose a valid action from either '1','2','3','4','5','6','exit' or 'logout': ")
+            action = input("Invalid action please choose a valid action from either '1','2','3','4','5','6','exit' or 'logout': ")
     print("What would you like to perform another action on this post? ")
     response = input("Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
     response = response.lower()
@@ -570,7 +665,7 @@ def post_action(pid):
             logout()
             return
         else:
-            response = input("Incorrect input please enter 'yes, 'no', 'exit' or logout': ")
+            response = input("Invalid input please enter 'yes, 'no', 'exit' or logout': ")
 
 
     return
@@ -598,7 +693,13 @@ user variable
 def exit():
     global user
     user = None
-    return
+    # this will print when exit() is called, exit() will return here
+    print("\nGoodbye!\n")
+
+    # standard
+    conn.commit()
+    conn.close()
+    sys.exit()
 
 def drop_tables():
     global conn, c
