@@ -5,8 +5,10 @@ import random
 # from search_posts.py import keyword_search
 
 def main():
+    
     # establish connection with database
     conn = sqlite3.connect(sys.argv[1])
+    conn.row_factory = sqlite3.Row 
 
     createDataBase()
 
