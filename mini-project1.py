@@ -7,16 +7,20 @@ import random
 def main():
     
     # establish connection with database
+    global conn
     conn = sqlite3.connect(sys.argv[1])
     conn.row_factory = sqlite3.Row 
 
-    createDataBase()
+    
 
     # this global variable can be used on all function call inside main()
     global c
     c = conn.cursor()
     c.execute('PRAGMA foreign_keys = ON;')
 
+    createDataBase() # THIS IS TO ERASE AND CREATE A DB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    
     # boot up welcome screen (which will give the login options)
     welcomeScreen()
 
@@ -162,10 +166,12 @@ def sysFunc():
             #call searchPost()
             end = False
             while end == False:
-                if (keyword_search() = None):
+                our_Post= keyword_search()
+                if (our_Post == None):
                     end = False
                 else:
                     end = True
+            post_action(our_Post)
             
             
             break
@@ -208,9 +214,6 @@ def postQuestion():
 
     sysFunc()
 
-# NOTE: search_posts will return the postID when the user selects a post or will return None if no posts could be found
-# (this could be because the keywords returned nothing or the user entered invalid keyword(s), resulting in no posts returning)
-# In mini project, perhaps add While search_posts == None, run the function again?
 
 """ -------------------------------
 Purpose: Asks the user to enter one or more keywords.
@@ -376,7 +379,7 @@ def keyword_search():
 					print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 
 						'Type of post: ' + ('Question' if each['qpid'] != None else 'Answer') + '\n'
 						'Title: ' + each['title'] + '\n' + 
-						'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
+						'Date: ' + str(each['pdate']) + '\n' + 'Poster: ' + each['poster'] + '\n' +
 						'Number of votes: '+ str(each['vcount']) + '\n' + 
 						'Number of answers: ' + str('N/A' if each['acount'] == 0 and each['qpid'] == None
 						else each['acount']) + '\n' + 'Body: ' +  each['body'][:30] + '...') 
@@ -410,9 +413,10 @@ def keyword_search():
 
 
 
-def vote(user_id,post_id):
+def vote(post_id):
+    global user
+    user_id = user[0]
     current = date.today()
-    print(current)
     #this makes sure the post exists
     c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
     rows = c.fetchall()
@@ -433,17 +437,61 @@ def vote(user_id,post_id):
     rows = c.fetchall()
     max = 0
     num = len(rows)
-    print(num)
     for i in range(0, num):
         if rows[i][0] > max:
             max = rows[i][0]
-    print(max)
     newVn = max +1
     conn.commit()
 
     c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user_id})
+    print("Vote added!")
+    conn.commit()
+
+def tag(post_id):
+    global user
+    user_id = user[0]
+    tag = input("What would you like the tag to say? Enter 'exit' to exit or 'logout' to logout: ") 
+    if tag == 'exit':
+        exit()
+    if tag == 'logout':
+        logout()
+    #this makes sure the user is privileged exists
+    c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
+    rows = c.fetchall()
+    if len(rows) < 1:
+        print("You are not a priviledged user and thus cannot add tags to posts. Tag rejected")
+        conn.commit()
+        #conn.close()
+        return
+
+
+    #this makes sure the post exists
+    c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
+    rows = c.fetchall()
+    if len(rows) < 1:
+        print("This post does not exist. Tag rejected")
+        conn.commit()
+        #conn.close()
+        return
+
+    #this is for making sure another tag does not exist where the pid is the same and tag is the same (here case ie lowercase or uppercase should
+    #not factor in .lower() is used to assure this)
+    c.execute("SELECT pid, tag FROM tags")
+    rows = c.fetchall()
+    num = len(rows)
+    print(num)
+    #knowledge of lower function from https://www.programiz.com/python-programming/methods/string/lower
+    for i in range(0, num):
+        if rows[i][0].lower() == post_id.lower():
+            if rows[i][1].lower() == tag.lower():
+                print("This post already has this tag. Tag rejected")
+                conn.commit()
+                return
+    c.execute("INSERT INTO tags(pid,tag) VALUES (:ourPid, :ourTag);", {'ourPid': post_id, 'ourTag': tag})
+    print("Tag added")
     
     conn.commit()
+    return
 
 
 '''-----------------------------------------------------------------
@@ -467,6 +515,68 @@ def retrieveUser(uid, pwd):
     """, {"uid":uid, "pwd":pwd})
 
     return c.fetchone()
+
+def post_action(pid):
+    correct_action = False
+    print("What action would you like to perform on this post?")
+    print("Enter 1 to post an answer for this post")
+    print("Enter 2 to vote on this post")
+    print("Enter 3 to mark the post as accepted")
+    print("Enter 4 to give a badge to the poster of this post")
+    print("Enter 5 to add a tag to the post")
+    print("Enter 6 to edit the title and/or body of the post")
+    print("Or enter 'exit' to exit or 'logout' to logout")
+    action = input("What action would you like to take? ") 
+    action = action.lower()
+    while (True):
+        if action.lower() == '1':
+            print("TBD")
+            break
+        elif action.lower() == '2':
+            vote(pid)
+            break
+        elif action == '3':
+            print("TBD")
+            break
+        elif action == '4':
+            print("TBD")
+            break
+        elif action == '5':
+            tag(pid)
+            break
+        elif action == '6':
+            print("TBD")
+            break
+        elif action == 'exit':
+            exit()
+            return
+        elif action == 'logout':
+            logout()
+            return
+        else:
+            action = input("Incorrect action please choose a valid action from either '1','2','3','4','5','6','exit' or 'logout': ")
+    print("What would you like to perform another action on this post? ")
+    response = input("Enter 'yes' or 'no' or 'exit' to exit or 'logout' to logout: ")
+    response = response.lower()
+    while (True):
+        if response == 'no':
+            sysFunc()
+        elif response == 'yes':
+            post_action(pid)
+        elif response == 'exit':
+            exit()
+            return
+        elif response == 'logout':
+            logout()
+            return
+        else:
+            response = input("Incorrect input please enter 'yes, 'no', 'exit' or logout': ")
+
+
+    return
+
+
+
 
 '''-----------------------------------------------------------------
 logout() - Helper function: Logout
@@ -621,35 +731,17 @@ def define_tables():
 
 
 def insert_data():
-    global conn, c
 
-    insert_courses = '''
-                        INSERT INTO course(course_id, title, seats_available) VALUES
-                            (1, 'CMPUT 291', 200),
-                            (2, 'CMPUT 391', 100),
-                            (3, 'CMPUT 101', 300);
-                    '''
-
-    insert_students = '''
-                            INSERT INTO student(student_id, name) VALUES
-                                    (1509106, 'Jeff'),
-                                    (1409106, 'Alex'),
-                                    (1609106, 'Mike');
-                            '''
     c.execute('''insert into users(uid,name,pwd,city,crdate) VALUES ('u001','Vince Wain', 123, 'Edmonton', 2019-01-05);''')
     c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p001',2019-01-06, 'What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
     c.execute('''insert into tags(pid,tag) VALUES ('p001','richardisbesT');''')
     c.execute('''insert into privileged(uid) VALUES ('u001');''')
-
-    c.execute(insert_courses)
-    c.execute(insert_students)
     conn.commit()
     return
 
-def createDataBase(){
+def createDataBase():
     drop_tables()
     define_tables()
     insert_data()
-}
 
 main()
