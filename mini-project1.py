@@ -11,15 +11,12 @@ def main():
     conn = sqlite3.connect(sys.argv[1])
     conn.row_factory = sqlite3.Row 
 
-    
-
     # this global variable can be used on all function call inside main()
     global c
     c = conn.cursor()
     c.execute('PRAGMA foreign_keys = ON;')
 
     createDataBase() # THIS IS TO ERASE AND CREATE A DB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     
     # boot up welcome screen (which will give the login options)
     welcomeScreen()
@@ -113,7 +110,10 @@ def registerScreen():
     while True:
         # get the uid
         uid = input("Enter uid: ")
-        # check if unique
+
+        while isUniqueUser(uid) != True:
+            print("This uid is already taken. Please enter a different uid.")
+            uid = input("Enter uid: ")
 
         # get data
         name = input("Enter name: ")
@@ -202,7 +202,12 @@ def postQuestion():
 
     # generate a pid
     pid = random.randint(1000, 9999)
-    
+
+    # check if pid is unqiue
+    # while not unique generate a random pid
+    while isUniquePost(pid) != True:
+        pid = random.randint(1000, 9999)
+
     # pdate is date today
     pdate = date.today()
 
@@ -211,6 +216,12 @@ def postQuestion():
         insert into posts
         values (:pid, :pdate, :title, :body, :poster)
         """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user[0]})
+
+    # insert newly created question to question table
+    c.execute("""
+        insert into questions
+        values(:pid, :theaid)
+    """, {"pid":pid, "theaid": None})
 
     print("""\n===============================================================
     Question Post#{} successfully posted!
@@ -426,8 +437,8 @@ def mark_accepted(post_id):
     row = c.execute("SELECT pid FROM questions")
     for each in row:
         if each['pid'] == post_id: # If the post that the user has selected is a question
-	    print("\nThe post you have selected is a question. Therefore, this option is not valid.")
-	    return
+	        print("\nThe post you have selected is a question. Therefore, this option is not valid.")
+	        return
 
     # Finding the question ID and the current accepted answer (the current postID is the input)
     c.execute("SELECT a.qid, q.theaid FROM answers a, questions q WHERE a.qid = q.pid AND a.pid = ?", (post_id,))
@@ -644,7 +655,6 @@ def edit(post_id):
         #conn.close()
         return
 
-
     #this makes sure the post exists
     c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
     rows = c.fetchall()
@@ -772,6 +782,7 @@ def post_action(pid):
     print("Enter 4 to give a badge to the poster of this post")
     print("Enter 5 to add a tag to the post")
     print("Enter 6 to edit the title and/or body of the post")
+    print("Enter 'back' to go back to system functionalities page")
     print("Or enter 'exit' to exit or 'logout' to logout")
     #gets the users choice of post action
     action = input("What action would you like to take? ") 
@@ -780,11 +791,14 @@ def post_action(pid):
     while (True):
         #user chose to post ananswer to this post
         if action.lower() == '1':
-            # assert that  pid is a question post
-            
-            # call postAnswer()
-            postAnswer(pid)
-            break
+            # assert that pid is a question post
+            if isQuestion(pid) == True:
+                # call postAnswer()
+                postAnswer(pid)
+                break
+            else: #selected post is not a question
+                print("\nYou have not selected a question post\n")
+                break
         elif action.lower() == '2':
             #user chose to place a vote on this post
             vote(pid)
@@ -805,6 +819,10 @@ def post_action(pid):
             #user chose to edit the title and/or body of the post
             edit(pid)
             break
+        elif action == 'back':
+            #user wishes to return to system functionalities page
+            sysFunc()
+            break
         elif action == 'exit':
             #user wishes to exit
             exit()
@@ -815,7 +833,7 @@ def post_action(pid):
             return
         else:
             #users did not make a valid choice, get a new choice
-            action = input("Invalid action please choose a valid action from either '1','2','3','4','5','6','exit' or 'logout': ")
+            action = input("Invalid action please choose a valid action from either '1','2','3','4','5','6','back,'exit' or 'logout': ")
             action = action.lower()
     #after the post action is completed ask the user if they would like to perform another post action on this post
     print("What would you like to perform another action on this post? ")
@@ -841,8 +859,6 @@ def post_action(pid):
             #user did not supply a valid choice. Prompt the user for another choice
             response = input("Invalid input please enter 'yes, 'no', 'exit' or logout': ")
             response = response.lower()
-
-
     return
 
 '''-----------------------------------------------------------------
@@ -863,8 +879,13 @@ def postAnswer(qid):
     title = input("Enter Title of Answer: ")
     body = input("Enter Body of Answer: ")
 
-    # generate a aid (cl)
+    # generate a pid
     pid = random.randint(1000, 9999)
+
+    # check if pid is unqiue
+    # while not unique generate a random pid
+    while isUniquePost(pid) != True:
+        pid = random.randint(1000, 9999)
     
     # pdate is date today
     pdate = date.today()
@@ -881,6 +902,76 @@ def postAnswer(qid):
     Answer #{}: "{}"
 =============================================================================""".format(qid, question[2], pid, title))
 
+'''-----------------------------------------------------------------
+isUniqueUser() - Helper function: Check if unique user id
+
+Purpose: Given a uid check if it is unique
+
+Params: uid - the id of the user
+
+Return: a boolean
+-----------------------------------------------------------------'''
+def isUniqueUser(uid):
+    c.execute("""
+        select *
+        from users u
+        where u.uid = :uid
+    """, {"uid": uid})
+
+    result = c.fetchone()
+
+    if result == None:
+        return True
+    else:
+        return False
+
+'''-----------------------------------------------------------------
+isUniquePost() - Helper function: Check if unique post id
+
+Purpose: Given a pid check if it is unique
+
+Params: pid - the id of the post
+
+Return: a boolean
+-----------------------------------------------------------------'''
+def isUniquePost(pid):
+    c.execute("""
+        select *
+        from posts p
+        where p.pid = :pid
+    """, {"pid": pid})
+
+    result = c.fetchone()
+
+    if result == None:
+        return True
+    else:
+        return False
+
+'''-----------------------------------------------------------------
+isQuestion() - Helper function: Check if this is a question post
+
+Purpose: This function will check if a pid is a question. return true
+if yes, else false
+
+Params: pid - the unique id of the post
+
+Return: a boolean
+-----------------------------------------------------------------'''
+def isQuestion(pid):
+    c.execute("""
+        select *
+        from questions q
+        where q.pid = :pid
+    """, {"pid": pid})
+
+    result = c.fetchone()
+
+    # if pid is found in questions table
+    if result != None:
+        return True
+    else:
+        return False
 '''-----------------------------------------------------------------
 retrievePost() - Helper function: Retrieve post data from db
 
