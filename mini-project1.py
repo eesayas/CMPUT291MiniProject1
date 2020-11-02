@@ -72,9 +72,9 @@ Functionalities sysfunc(). Else, print a login error message and show
 interface again.
 -----------------------------------------------------------------'''
 def loginScreen():
-    print("""==================================================
+    print("""===============================================================
     LOGIN SCREEN
-==================================================""")
+===============================================================""")
     while True:
         # get the username via user input
         uid = input("Enter username: ")
@@ -107,9 +107,9 @@ Data will also have crdate, which is the current date. When register is
 successful move on to system functionalities sysfunc().
 -------------------------------------------------------------------------'''
 def registerScreen():
-    print("""==================================================
+    print("""===============================================================
     REGISTER SCREEN
-==================================================""")
+===============================================================""")
     while True:
         # get the uid
         uid = input("Enter uid: ")
@@ -150,9 +150,9 @@ Purpose: This is the interface where users can either post a question
 or search for a post to do further post actions
 -----------------------------------------------------------------'''
 def sysFunc():
-    print("""==================================================
+    print("""===============================================================
     SYSTEM FUNCTIONALITIES
-==================================================""")
+===============================================================""")
     while True:
         print("""System functions:
         1 - Post a question
@@ -192,9 +192,9 @@ postQuestion() - The Post Question Screen
 Purpose: This is the interface where users can post a question
 -----------------------------------------------------------------'''
 def postQuestion():
-    print("""==================================================
+    print("""===============================================================
     POST A QUESTION
-==================================================""")
+===============================================================""")
 
     # get data
     title = input("Enter Title of Question: ")
@@ -212,10 +212,11 @@ def postQuestion():
         values (:pid, :pdate, :title, :body, :poster)
         """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user[0]})
 
-    print("\nQuestion posted successfully!\n")
-
-    sysFunc()
-
+    print("""\n===============================================================
+    Question Post#{} successfully posted!
+===============================================================\n""".format(pid))
+    
+    sysFunc() # go back to system functions menu
 
 """ -------------------------------
 Purpose: Asks the user to enter one or more keywords.
@@ -589,28 +590,6 @@ def edit(post_id):
     conn.commit()
     return
 
-'''-----------------------------------------------------------------
-retrieveUser() - Helper function: Retrieve user data from db
-
-Purpose: This function will retrieve and return a user from db
-given uid and pwd
-
-Params: uid - the unique id of the user
-        pwd - the password of the user
-
-Return: a tuple of user data or None
------------------------------------------------------------------'''
-def retrieveUser(uid, pwd):
-    # try to get credentials from db
-    c.execute("""
-    select *
-    from users u
-    where u.uid = :uid and u.pwd = :pwd
-    limit 1; 
-    """, {"uid":uid, "pwd":pwd})
-
-    return c.fetchone()
-
 def post_action(pid):
     correct_action = False
     print("What action would you like to perform on this post?")
@@ -625,7 +604,10 @@ def post_action(pid):
     action = action.lower()
     while (True):
         if action.lower() == '1':
-            print("TBD")
+            # assert that  pid is a question post
+            
+            # call postAnswer()
+            postAnswer(pid)
             break
         elif action.lower() == '2':
             vote(pid)
@@ -670,8 +652,82 @@ def post_action(pid):
 
     return
 
+'''-----------------------------------------------------------------
+postAnswer() - The Post Answer Screen
 
+Purpose: This will allow the user to post an answer to selected post
 
+Params: qid - the question post this is answering
+-----------------------------------------------------------------'''
+def postAnswer(qid):
+    question = retrievePost(qid)
+    print("""\n==================================================
+    POST AN ANSWER to Post#{}
+    "{}"
+==================================================\n""".format(qid, question[2]))
+
+    # get data
+    title = input("Enter Title of Answer: ")
+    body = input("Enter Body of Answer: ")
+
+    # generate a aid (cl)
+    pid = random.randint(1000, 9999)
+    
+    # pdate is date today
+    pdate = date.today()
+
+    # try to insert to db
+    c.execute("""
+        insert into posts
+        values (:pid, :pdate, :title, :body, :poster)
+        """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user[0]})
+    
+    print("""=============================================================================
+    Answer successfully posted! 
+    Question #{}: "{}"
+    Answer #{}: "{}"
+=============================================================================""".format(qid, question[2], pid, title))
+
+'''-----------------------------------------------------------------
+retrievePost() - Helper function: Retrieve post data from db
+
+Purpose: This function will retrieve and return a post from db
+given pid
+
+Params: pid - the unique id of the post
+
+Return: a tuple of post data or None
+-----------------------------------------------------------------'''
+def retrievePost(pid):
+    c.execute("""
+        select *
+        from posts p
+        where p.pid = :pid
+    """, {"pid": pid})
+    
+    return c.fetchone()
+
+'''-----------------------------------------------------------------
+retrieveUser() - Helper function: Retrieve user data from db
+
+Purpose: This function will retrieve and return a user from db
+given uid and pwd
+
+Params: uid - the unique id of the user
+        pwd - the password of the user
+
+Return: a tuple of user data or None
+-----------------------------------------------------------------'''
+def retrieveUser(uid, pwd):
+    # try to get credentials from db
+    c.execute("""
+    select *
+    from users u
+    where u.uid = :uid and u.pwd = :pwd
+    limit 1; 
+    """, {"uid":uid, "pwd":pwd})
+
+    return c.fetchone()
 
 '''-----------------------------------------------------------------
 logout() - Helper function: Logout
