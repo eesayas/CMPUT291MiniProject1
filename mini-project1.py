@@ -2,7 +2,6 @@ import sqlite3, sys
 from getpass import getpass
 from datetime import date
 import random
-# from search_posts.py import keyword_search
 
 def main():
     
@@ -16,19 +15,11 @@ def main():
     c = conn.cursor()
     c.execute('PRAGMA foreign_keys = ON;')
 
-    createDataBase() # THIS IS TO ERASE AND CREATE A DB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+    # THIS IS TO ERASE AND CREATE A DB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    createDataBase() 
+
     # boot up welcome screen (which will give the login options)
     welcomeScreen()
-
-    # this will print when exit() is called, exit() will return here
-
-#moved this to exit. When I changed up exit
-#    print("\nGoodbye!\n")
-
-    # standard
-#    conn.commit()
-#    conn.close()
 
 '''-----------------------------------------------------------------
 welcomeScreen() - The Welcome Screen
@@ -74,7 +65,7 @@ def loginScreen():
 ===============================================================""")
     while True:
         # get the username via user input
-        uid = input("Enter username: ")
+        uid = input("Enter username: ").lower()
 
         # get the password via user inout
         pwd = getpass("Enter password: ")
@@ -85,12 +76,15 @@ def loginScreen():
 
         # if a user exists break from loop
         if(user != None):
+            print("""\n===============================================================
+    Welcome {}! User#{}
+===============================================================\n""".format(user[1], user[0]))
             sysFunc()
             break
         
         # else print login error
         else:
-            choice = input("\nUsername or password is incorrect. Try Again? (yes/no):")
+            choice = input("\nUsername or password is incorrect. Try Again? (yes/no):").lower()
             if(str(choice) != "yes"):
                 welcomeScreen()
                 break
@@ -133,6 +127,9 @@ def registerScreen():
 
         # if a user exists break from loop
         if(user != None):
+            print("""\n===============================================================
+    Welcome {}! User#{}
+===============================================================\n""".format(user[1], user[0]))
             sysFunc()
             break
         
@@ -396,7 +393,8 @@ def keyword_search():
 						'Date: ' + str(each['pdate']) + '\n' + 'Poster: ' + each['poster'] + '\n' +
 						'Number of votes: '+ str(each['vcount']) + '\n' + 
 						'Number of answers: ' + str('N/A' if each['acount'] == 0 and each['qpid'] == None
-						else each['acount']) + '\n' + 'Body: ' +  each['body'][:30] + '...') 
+						else each['acount']) + '\n' + 'Body: ' +  
+                        (each['body'] if (len(each['body']) < 30) else (each['body'] + '...')))
 						# If the post is an answer, then the number of answers is N/A.
 
 					select_options[str(num+1)] = each['pid'] # Adds the post option into the list of possible options for user
@@ -1009,7 +1007,7 @@ def retrieveUser(uid, pwd):
     from users u
     where u.uid = :uid and u.pwd = :pwd
     limit 1; 
-    """, {"uid":uid, "pwd":pwd})
+    """, {"uid":uid.lower(), "pwd":pwd})
 
     return c.fetchone()
 
