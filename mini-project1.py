@@ -527,9 +527,8 @@ def give_badge(post_id):
 	except sqlite3.Error as e:
 	    print("\nYou cannot give a badge to the same user on the same day.")
 	    return
-
-	c.execute('INSERT INTO ubadges VALUES (:uid, :bdate,:b_name)', b_add)
-	print('\nBadge has been given!')
+	else:
+	    print('\nBadge has been given!')
 
 	conn.commit()
 
