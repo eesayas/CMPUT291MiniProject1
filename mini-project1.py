@@ -477,6 +477,7 @@ def mark_accepted(post_id):
             else: # Changes the current accepted answer to the answer that the user has chosen
                 c.execute("""UPDATE questions SET theaid = ? WHERE pid = 
                          (SELECT a.qid FROM answers a WHERE a.pid = ?)""", (post_id, post_id))
+		print("The answer you have chosen is now marked as the accepted answer!")
 
 
     conn.commit()
