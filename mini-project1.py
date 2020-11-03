@@ -432,6 +432,12 @@ Output: None
 
 def mark_accepted(post_id):
 	
+    check = c.execute("SELECT uid FROM privileged WHERE uid =:user_id;", ({'user_id': user}))
+   
+    if c.fetchone() == None:
+        print("You are not a privledged user, so you cannot perform this action.\n")
+        return
+	
     row = c.execute("SELECT pid FROM questions")
     for each in row:
         if each['pid'] == post_id: # If the post that the user has selected is a question
@@ -482,6 +488,12 @@ Input: postID
 Output: None
 ---------------------------"""
 def give_badge(post_id):
+	
+    	check = c.execute("SELECT uid FROM privileged WHERE uid =:user_id;", ({'user_id': user}))
+   
+    	if c.fetchone() == None:
+            print("You are not a privledged user, so you cannot perform this action.\n")
+            return
 
 	current = date.today() # The current date 
 
