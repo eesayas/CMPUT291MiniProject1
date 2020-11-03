@@ -776,8 +776,8 @@ def edit(post_id):
 """ -------------------------------------------------
 Purpose: Displays the Screen which contains all the post
 actions availible to the user. Then prompts the user to
-enter their choice of action and takes the corrent action
-accordinglt
+enter their choice of action and takes the correc action
+accordingly
 
 Input: post_id: the pid of the current selected post
 Output: None
