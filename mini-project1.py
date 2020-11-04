@@ -544,18 +544,17 @@ Output: None
 def vote(post_id):
     #get the current user's uid
     global user
-    user_id = user[0]
+    
     current = date.today()
     #this makes sure the post exists
-    c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id} )
-    rows = c.fetchall()
-    if len(rows) < 1:
+    rows = c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id})
+    if c.fetchone() == None:
         print("This post does not exist. Vote rejected")
         #conn.commit()
         #conn.close()
         return
     #this makes sure the user has not already voted on this specific post
-    c.execute("SELECT pid FROM votes WHERE pid =:ourPid AND uid=:ourUser",{"ourPid":post_id, "ourUser":user_id} )
+    c.execute("SELECT pid FROM votes WHERE pid =:ourPid AND uid=:ourUser",{"ourPid":post_id, "ourUser":user} )
     rows = c.fetchall()
     if len(rows) > 0:
         print("You have already voted on this post. Vote rejected")
@@ -573,7 +572,7 @@ def vote(post_id):
     newVn = max +1
     #conn.commit()
     #add our new vote to the database
-    c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user_id})
+    c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user})
     print("Vote added!")
     conn.commit()
 
@@ -589,12 +588,12 @@ Output: None
 def tag(post_id):
     #get the current user's uid
     global user
-    user_id = user[0]
+ 
 
     #this makes sure the user is privileged
-    c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
-    rows = c.fetchall()
-    if len(rows) < 1:
+    rows = c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user} )
+   
+    if c.fetchone() == None:
         print("You are not a priviledged user and thus cannot add tags to posts. Tag rejected")
         #conn.commit()
         #conn.close()
@@ -654,12 +653,12 @@ Output: None
 def edit(post_id):
     #get the current user's uid
     global user
-    user_id = user[0]
+   
 
     #this makes sure the user is privileged exists
-    c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user_id} )
-    rows = c.fetchall()
-    if len(rows) < 1:
+    rows = c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user} )
+   
+    if c.fetchone() == None:
         print("You are not a priviledged user and thus cannot add tags to posts. Edit rejected")
         conn.commit()
         #conn.close()
@@ -904,7 +903,7 @@ def postAnswer(qid):
     c.execute("""
         insert into posts
         values (:pid, :pdate, :title, :body, :poster)
-        """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user[0]})
+        """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user})
     
     print("""=============================================================================
     Answer successfully posted! 
@@ -1020,8 +1019,9 @@ def retrieveUser(uid, pwd):
     where u.uid = :uid and u.pwd = :pwd
     limit 1; 
     """, {"uid":uid.lower(), "pwd":pwd})
-
-    return c.fetchone()
+    
+    row = c.fetchone()
+    return [row['uid'],row['name']]
 
 '''-----------------------------------------------------------------
 logout() - Helper function: Logout
