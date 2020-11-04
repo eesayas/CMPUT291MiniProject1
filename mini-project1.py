@@ -105,10 +105,10 @@ def registerScreen():
         # get the uid
         uid = input("Enter uid: ")
 
-        while isUniqueUser(uid) != True:
-            print("This uid is already taken. Please enter a different uid.")
+        while isUniqueUser(uid) != True or len(uid) != 4:
+            print("This uid is already taken or is not 4 characters long. Please enter a different uid.")
             uid = input("Enter uid: ")
-
+    
         # get data
         name = input("Enter name: ")
         city = input("Enter city: ")
@@ -402,8 +402,8 @@ def keyword_search():
 			print('\nNo posts are displayed. Please try using other valid keywords.')
 			return 
 
-		if not reached_max: # If more posts can be displayed			
-			user_select = input("\nSelect a post displayed above, or type in 's' to see more posts. \n")
+		if not reached_max and len(order_track) > 5: # If more posts can be displayed			
+			user_select = input("\nSelect a post displayed above, or type in 's' to see more posts. \n").lower()
 		else:
 			user_select = input("\nSelect a post displayed above:  \n")
 
@@ -415,7 +415,7 @@ def keyword_search():
 		else:
 			valid_input = False # The user did not enter a valid input
 			while not valid_input:
-				user_select = input('Please enter a valid input: ')
+				user_select = input('Please enter a valid input: ').lower()
 				if user_select in select_options.keys(): # If the user selects a post result number that is displayed above
 					return select_options[user_select]
 				elif user_select == 's': 
@@ -1059,7 +1059,7 @@ def exit():
     conn.commit()
     conn.close()
     sys.exit()
-"""
+
 
 def drop_tables():
     global conn, c
@@ -1203,6 +1203,6 @@ def insert_data():
 def createDataBase():
     drop_tables()
     define_tables()
-    insert_data()"""
+    insert_data()
 
 main()
