@@ -112,7 +112,11 @@ def registerScreen():
         # get data
         name = input("Enter name: ")
         city = input("Enter city: ")
-        pwd = input("Enter password: ")
+        pwd = ''
+        while len(pwd) == 0:
+            pwd = getpass("Enter password (cannot be left empty): ")
+            if len(pwd) == 0:
+                print("Invalid please enter a password")
         crdate = date.today()
 
         # try to insert to db
@@ -436,31 +440,27 @@ def mark_accepted(post_id):
 
     #this makes sure the user is privileged
     rows = c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user[0]} )
-   
     if c.fetchone() == None:
         print("You are not a priviledged user and thus cannot mark posts as accepted. Marking post as accepted rejected")
         #conn.commit()
         #conn.close()
         return
-	
-    #c.execute("SELECT pid FROM questions WHERE pid =:ourPid",{"ourPid":post_id} )
-    #rows = c.fetchall()
-    #if len(rows) != 0:
-        #print("\nThe post you have selected is a question. Therefore, this option is not valid.")
-	        #return
         
+    #this makes sure the post for which we are trying to mark as accpeted is in fact an answer 
     c.execute("SELECT pid FROM answers WHERE pid =:ourPid",{"ourPid":post_id} )
     rows = c.fetchall()
     if len(rows) == 0:
         print("\nThe post you have selected is not an answer. Therefore, this option is not valid.")
         return
 
+    #this is to test for a rare/edge case where the answer's qid is not associated to any question
     c.execute("SELECT q.pid FROM questions q, answers a WHERE a.pid =:ourPid AND a.qid = q.pid",{"ourPid":post_id} )
     rows = c.fetchall()
     if len(rows) == 0:
         print("The answer is not associated with any question.")
         return
 
+    #the question our answer is associated with
     question = rows[0][0]
 
     # Finding the current accepted answer (the current postID is the input)
@@ -1215,14 +1215,14 @@ def define_tables():
 
 def insert_data():
 
-    c.execute('''insert into users(uid,name,pwd,city,crdate) VALUES ('u001','Vince Wain', 123, 'Edmonton', 2019-01-05);''')
-    c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p001',2019-01-06, 'What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
-    c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p002',2019-01-06, '2222What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
-    c.execute('''insert into tags(pid,tag) VALUES ('p001','richardisbesT');''')
-    c.execute('''insert into privileged(uid) VALUES ('u001');''')
-    c.execute('''insert into questions(pid,theaid) VALUES ('p001',Null);''')
-    c.execute('''insert into answers(pid,qid) VALUES ('p002','p001');''')
-    conn.commit()
+    #c.execute('''insert into users(uid,name,pwd,city,crdate) VALUES ('u001','Vince Wain', 123, 'Edmonton', 2019-01-05);''')
+    #c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p001',2019-01-06, 'What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
+    #c.execute('''insert into posts(pid,pdate,title,body,poster) VALUES ('p002',2019-01-06, '2222What can I do to earn badges?', 'What kind of posts do people tend to give out badges for?','u001');''')
+    #c.execute('''insert into tags(pid,tag) VALUES ('p001','richardisbesT');''')
+    #c.execute('''insert into privileged(uid) VALUES ('u001');''')
+    #c.execute('''insert into questions(pid,theaid) VALUES ('p001',Null);''')
+    #c.execute('''insert into answers(pid,qid) VALUES ('p002','p001');''')
+    #conn.commit()
     return
 
 def createDataBase():
