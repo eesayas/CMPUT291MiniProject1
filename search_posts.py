@@ -186,9 +186,12 @@ def keyword_search():
 			print('\nNo posts are displayed. Please try using other valid keywords.')
 			return 
 
-		if not reached_max: # If more posts can be displayed			
+
+        if len(order_track) == 5:
+			user_select = input("\nSelect a post displayed above:  \n")
+        elif not reached_max: # If more posts can be displayed			
 			user_select = input("\nSelect a post displayed above, or type in 's' to see more posts. \n")
-		else:
+        else:
 			user_select = input("\nSelect a post displayed above:  \n")
 
 		# ---------------------------------------------------------------------------------------------------------

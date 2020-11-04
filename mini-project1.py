@@ -390,11 +390,10 @@ def keyword_search():
 					print('Result ' + str(num+1) + '\n\n' + 'postID: ' + each['pid'] + '\n' + 
 						'Type of post: ' + ('Question' if each['qpid'] != None else 'Answer') + '\n'
 						'Title: ' + each['title'] + '\n' + 
-						'Date: ' + str(each['pdate']) + '\n' + 'Poster: ' + each['poster'] + '\n' +
+						'Date: ' + each['pdate'] + '\n' + 'Poster: ' + each['poster'] + '\n' +
 						'Number of votes: '+ str(each['vcount']) + '\n' + 
 						'Number of answers: ' + str('N/A' if each['acount'] == 0 and each['qpid'] == None
-						else each['acount']) + '\n' + 'Body: ' +  
-                        (each['body'] if (len(each['body']) < 30) else (each['body'] + '...')))
+						else each['acount']) + '\n' + 'Body: ' +  each['body'][:30] + '...') 
 						# If the post is an answer, then the number of answers is N/A.
 
 					select_options[str(num+1)] = each['pid'] # Adds the post option into the list of possible options for user
@@ -432,10 +431,10 @@ Output: None
 
 def mark_accepted(post_id):
 	
-    check = c.execute("SELECT uid FROM privileged WHERE uid =:user_id;", ({'user_id': user}))
+    check = c.execute("SELECT uid FROM privileged WHERE uid =:user_id;", ({'user_id': user[0]}))
    
     if c.fetchone() == None:
-        print("You are not a privledged user, so you cannot perform this action.\n")
+        print("You are not a privileged user, so you cannot perform this action.\n")
         return
 	
     row = c.execute("SELECT pid FROM questions")
@@ -491,7 +490,7 @@ Output: None
 ---------------------------"""
 def give_badge(post_id):
 
-    check = c.execute("SELECT uid FROM privileged WHERE uid=:user_id;",({'user_id':user}))
+    check = c.execute("SELECT uid FROM privileged WHERE uid=:user_id;",({'user_id':user[0]}))
 
     if c.fetchone() == None:
         print("You are not a privileged user, so you cannot perform this action.\n")
@@ -555,7 +554,8 @@ def vote(post_id):
         #conn.close()
         return
     #this makes sure the user has not already voted on this specific post
-    c.execute("SELECT pid FROM votes WHERE pid =:ourPid AND uid=:ourUser",{"ourPid":post_id, "ourUser":user} )
+   
+    c.execute("SELECT pid FROM votes WHERE pid =:ourPid AND uid=:ourUser",({"ourPid":post_id, "ourUser":user[0]}) )
     rows = c.fetchall()
     if len(rows) > 0:
         print("You have already voted on this post. Vote rejected")
@@ -573,7 +573,7 @@ def vote(post_id):
     newVn = max +1
     #conn.commit()
     #add our new vote to the database
-    c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user})
+    c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user[0]})
     print("Vote added!")
     conn.commit()
 
@@ -592,7 +592,7 @@ def tag(post_id):
  
 
     #this makes sure the user is privileged
-    rows = c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user} )
+    rows = c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user[0]} )
    
     if c.fetchone() == None:
         print("You are not a priviledged user and thus cannot add tags to posts. Tag rejected")
@@ -657,7 +657,7 @@ def edit(post_id):
    
 
     #this makes sure the user is privileged exists
-    rows = c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user} )
+    rows = c.execute("SELECT * FROM privileged WHERE uid =:ourUser",{"ourUser":user[0]} )
    
     if c.fetchone() == None:
         print("You are not a priviledged user and thus cannot add tags to posts. Edit rejected")
