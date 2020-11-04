@@ -16,7 +16,7 @@ def main():
     c.execute('PRAGMA foreign_keys = ON;')
 
     # THIS IS TO ERASE AND CREATE A DB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    createDataBase() 
+    # createDataBase() 
 
     # boot up welcome screen (which will give the login options)
     welcomeScreen()
@@ -477,7 +477,8 @@ def mark_accepted(post_id):
             else: # Changes the current accepted answer to the answer that the user has chosen
                 c.execute("""UPDATE questions SET theaid = ? WHERE pid = 
                          (SELECT a.qid FROM answers a WHERE a.pid = ?)""", (post_id, post_id))
-		print("The answer you have chosen is now marked as the accepted answer!")
+                print("The answer you have chosen is now marked as the accepted answer!")
+		        
 
 
     conn.commit()
@@ -489,51 +490,51 @@ Input: postID
 Output: None
 ---------------------------"""
 def give_badge(post_id):
+
+    check = c.execute("SELECT uid FROM privileged WHERE uid=:user_id;",({'user_id':user}))
+
+    if c.fetchone() == None:
+        print("You are not a privileged user, so you cannot perform this action.\n")
+        return
+
+    current = date.today() # The current date 
+
+    c.execute('SELECT poster FROM posts WHERE pid = ?;', (post_id,))
+    row = c.fetchone() # Only one output is expected
+    poster_id = row['poster'] # Finds the poster of the selected post
 	
-    	check = c.execute("SELECT uid FROM privileged WHERE uid =:user_id;", ({'user_id': user}))
-   
-    	if c.fetchone() == None:
-            print("You are not a privledged user, so you cannot perform this action.\n")
-            return
+    c.execute('SELECT rowid, bname FROM badges ORDER BY rowid; ') # rowIDs are used to give numbered options to the user
+    row = c.fetchall()
 
-	current = date.today() # The current date 
-
-	c.execute('SELECT poster FROM posts WHERE pid = ?;', (post_id,))
-	row = c.fetchone() # Only one output is expected
-	poster_id = row['poster'] # Finds the poster of the selected post
-	
-	c.execute('SELECT rowid, bname FROM badges ORDER BY rowid; ') # rowIDs are used to give numbered options to the user
-	row = c.fetchall()
-
-	possible_options = [] # Keeps track of all the possible numbered options the user can choose from
-	for b_info in row:
-		possible_options.append(str(b_info['rowid']))
-		print(b_info['rowid'],b_info['bname']) # Displaying the badge options for the user to choose from
+    possible_options = [] # Keeps track of all the possible numbered options the user can choose from
+    for b_info in row:
+	    possible_options.append(str(b_info['rowid']))
+	    print(b_info['rowid'],b_info['bname']) # Displaying the badge options for the user to choose from
 
 	# User enters a number that corresponds to the badge name
-	b_name_input = input('\nWhich badge would you like to give? Enter the number that is associated with the badge: ')
-	while b_name_input not in possible_options:
-		b_name_input = input('\nPlease enter a valid number that is associated with a badge: ')
+    b_name_input = input('\nWhich badge would you like to give? Enter the number that is associated with the badge: ')
+    while b_name_input not in possible_options:
+	    b_name_input = input('\nPlease enter a valid number that is associated with a badge: ')
 
 
-	for each in row:
-		if str(each['rowid']) == b_name_input:
-			b_name_input = each['bname'] # Finds the badge name based on the number given by the user
+    for each in row:
+	    if str(each['rowid']) == b_name_input:
+		    b_name_input = each['bname'] # Finds the badge name based on the number given by the user
 
 	# Stores the poster, the current date, and the badge selected
-	b_add = {'uid': poster_id, 'bdate': current, 'b_name': b_name_input}
+    b_add = {'uid': poster_id, 'bdate': current, 'b_name': b_name_input}
 	
-	try:
-	    c.execute('INSERT INTO ubadges VALUES (:uid, :bdate,:b_name)', b_add)
-	except sqlite3.Error as e:
-	    print("\nYou cannot give a badge to the same user on the same day.")
-	    return
-	else:
-	    print('\nBadge has been given!')
+    try:
+        c.execute('INSERT INTO ubadges VALUES (:uid, :bdate,:b_name)', b_add)
+    except sqlite3.Error as e:
+        print("\nYou cannot give a badge to the same user on the same day.")
+        return
+    else:
+        print('\nBadge has been given!')
 
-	conn.commit()
+    conn.commit()
 
-	return
+    return
 """ -------------------------------------------------
 Purpose: Allows a user to add a vote on the 
 post(for which its post id is passed as input)
@@ -903,7 +904,7 @@ def postAnswer(qid):
     c.execute("""
         insert into posts
         values (:pid, :pdate, :title, :body, :poster)
-        """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user})
+        """, {"pid":pid, "pdate":pdate, "title":title, "body":body, "poster": user[0]})
     
     print("""=============================================================================
     Answer successfully posted! 
@@ -1021,7 +1022,12 @@ def retrieveUser(uid, pwd):
     """, {"uid":uid.lower(), "pwd":pwd})
     
     row = c.fetchone()
-    return [row['uid'],row['name']]
+    
+    # to prevent subscription to NoneType
+    if row == None:
+        return None
+
+    return (row[0], row[1])
 
 '''-----------------------------------------------------------------
 logout() - Helper function: Logout
@@ -1031,6 +1037,9 @@ to Welcome Screen
 -----------------------------------------------------------------'''
 def logout():
     global user
+    print("""\n===============================================================
+    Goodbye {}! User#{}
+===============================================================\n""".format(user[1], user[0]))
     user = None
     welcomeScreen()
 
@@ -1050,6 +1059,7 @@ def exit():
     conn.commit()
     conn.close()
     sys.exit()
+"""
 
 def drop_tables():
     global conn, c
@@ -1193,6 +1203,6 @@ def insert_data():
 def createDataBase():
     drop_tables()
     define_tables()
-    insert_data()
+    insert_data()"""
 
 main()
