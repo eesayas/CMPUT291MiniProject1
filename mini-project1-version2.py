@@ -16,7 +16,7 @@ def main():
     c.execute('PRAGMA foreign_keys = ON;')
 
     # THIS IS TO ERASE AND CREATE A DB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    createDataBase() 
+    #createDataBase() 
 
     # boot up welcome screen (which will give the login options)
     welcomeScreen()
@@ -572,8 +572,6 @@ def vote(post_id):
     rows = c.execute("SELECT * FROM posts p1 WHERE p1.pid=:ourPid",{"ourPid":post_id})
     if c.fetchone() == None:
         print("This post does not exist. Vote rejected")
-        #conn.commit()
-        #conn.close()
         return
     #this makes sure the user has not already voted on this specific post
    
@@ -581,8 +579,6 @@ def vote(post_id):
     rows = c.fetchall()
     if len(rows) > 0:
         print("You have already voted on this post. Vote rejected")
-        #conn.commit()
-        #conn.close()
         return
     #this is used to get a new distinct vno by getting all previous vno's and making our new vno 1+(max of all previous vno)
     c.execute("SELECT DISTINCT vno FROM votes")
@@ -593,7 +589,6 @@ def vote(post_id):
         if rows[i][0] > max:
             max = rows[i][0]
     newVn = max +1
-    #conn.commit()
     #add our new vote to the database
     c.execute("INSERT INTO votes VALUES (:ourPid, :ourVn, :ourVoteDate, :ourUser);", {'ourPid': post_id, 'ourVn': newVn, 'ourVoteDate': current, 'ourUser': user[0]})
     print("Vote added!")
@@ -618,8 +613,6 @@ def tag(post_id):
    
     if c.fetchone() == None:
         print("You are not a priviledged user and thus cannot add tags to posts. Tag rejected")
-        #conn.commit()
-        #conn.close()
         return
 
 
@@ -628,8 +621,6 @@ def tag(post_id):
     rows = c.fetchall()
     if len(rows) < 1:
         print("This post does not exist. Tag rejected")
-        #conn.commit()
-        #conn.close()
         return
 
     #get the user's input for the tag's content
@@ -683,8 +674,6 @@ def edit(post_id):
    
     if c.fetchone() == None:
         print("You are not a priviledged user and thus cannot add tags to posts. Edit rejected")
-        conn.commit()
-        #conn.close()
         return
 
     #this makes sure the post exists
@@ -692,8 +681,6 @@ def edit(post_id):
     rows = c.fetchall()
     if len(rows) < 1:
         print("This post does not exist. Edit rejected")
-        conn.commit()
-        #conn.close()
         return
 
     #get the user's choice for wether or not they would like the edit the post's title
