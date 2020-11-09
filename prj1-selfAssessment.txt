@@ -1,0 +1,44 @@
+Group members 
+(mark with * the member whose submission is assessed)
+  1. Name and CCID
+  2. Name and CCID
+  3. Name and CCID
+
+For each section in the marking, test your project and mark it as 'pass', 'partial pass', 'fail'.
+
+Self-test result
+
+1. Login screen
+ a)
+ b)
+ c)
+ d)
+
+2. Post a question:
+
+3. Search for posts:
+ a)
+ b)
+
+4. Post action-answer:
+ a)
+ b)
+
+5. Checking accesses:
+
+6. Post action-vote:
+
+7. Post action-mark as the accepted:
+ a)
+ b)
+ c)
+
+8. Post action-Give a badge:
+
+9. Post action-Add a tag:
+
+10. Post action-Edit:"
+
+11. Logout: 
+
+12. Case-sensivity:
