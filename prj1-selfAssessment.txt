@@ -2,7 +2,7 @@ Group members
 (mark with * the member whose submission is assessed)
   1. Elena Xu and exu
   2. Richard Davidson and rcdavids
-  3. Name and CCID
+  3. Isaias Briones and briones
 
 For each section in the marking, test your project and mark it as 'pass', 'partial pass', 'fail'.
 
