@@ -1,6 +1,6 @@
 Group members 
 (mark with * the member whose submission is assessed)
-  1. Name and CCID
+  1. Elena Xu and exu
   2. Name and CCID
   3. Name and CCID
 
@@ -9,36 +9,44 @@ For each section in the marking, test your project and mark it as 'pass', 'parti
 Self-test result
 
 1. Login screen
- a)
- b)
- c)
- d)
+ a) pass
+ b) pass
+ c) pass
+ d) pass
 
 2. Post a question:
+pass
 
 3. Search for posts:
- a)
- b)
+ a) pass
+ b) pass
 
 4. Post action-answer:
- a)
- b)
+ a) pass
+ b) pass
 
 5. Checking accesses:
+pass
 
 6. Post action-vote:
+pass
 
 7. Post action-mark as the accepted:
- a)
- b)
- c)
+ a) pass
+ b) pass
+ c) pass
 
 8. Post action-Give a badge:
+pass
 
 9. Post action-Add a tag:
+pass
 
 10. Post action-Edit:"
+pass
 
 11. Logout: 
+pass
 
 12. Case-sensivity:
+pass
