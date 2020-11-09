@@ -65,7 +65,7 @@ def loginScreen():
 ===============================================================""")
     while True:
         # get the username via user input
-        uid = input("Enter username: ").lower()
+        uid = input("Enter username: ")
 
         # get the password via user inout
         pwd = getpass("Enter password: ")
@@ -1013,15 +1013,17 @@ Params: uid - the unique id of the user
 Return: a tuple of user data or None
 -----------------------------------------------------------------'''
 def retrieveUser(uid, pwd):
+    # print(uid, pwd)
     # try to get credentials from db
     c.execute("""
     select *
     from users u
-    where u.uid = :uid and u.pwd = :pwd
+    where lower(u.uid) = :uid and u.pwd = :pwd
     limit 1; 
     """, {"uid":uid.lower(), "pwd":pwd})
     
     row = c.fetchone()
+    # print(row)
     
     # to prevent subscription to NoneType
     if row == None:
